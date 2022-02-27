@@ -8,10 +8,10 @@
     // ------------------------------------------
     // Elenco Paramentri
     // ------------------------------------------
-    // Link foglio google:      spreadsheeturl=https://docs.google.com/spreadsheets/d/13p3_l3bnNjV0K9MuTl2_M37n-0bYySLan2fdpDNeoiY/edit
-    // Riferimento tabella1:    TABLE1=nometabella1 & INTERVAL1=A1:C9
-    // Riferimento tabella2:    TABLE2=nometabella2
-    // Riferimento tabellaN:    TABLEN=nometabellaN & INTERVALN=A1:C4
+    // Link foglio google:      spreadsheeturl=[link foglio google]
+    // Riferimento tabella1:    TABLE1=[nometabella1] & INTERVAL1=[A1:C9]
+    // Riferimento tabella2:    TABLE2=[nometabella2]
+    // Riferimento tabellaN:    TABLEN=[nometabellaN] & INTERVALN=[A1:C4]
 
     // Di default passando solo il nome del foglio (foglio1, foglio2, ...) il programma restituisce le tabella in un array
     // Se nel foglio oltre alla tabella dovessero esserci altre celle compilate che non fanno parte della tabella,

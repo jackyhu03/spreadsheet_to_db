@@ -10,7 +10,7 @@
    
    // googleAPI::get_spreadsheet(id foglio google, nome foglio (foglio1, 2, 3...), intervallo opzionale)
    //   -> Ritorna tabella richiesta in tipo array (multidimensionale)
-
+    
     require 'class.request.php';
 
     class googleAPI {
@@ -18,7 +18,7 @@
         // Google API available keys
         private const KEYS = array
         (
-            0 => "AIzaSyAxrhJVQNqFD43MjLPLlj55OlLXs7yUqJw", 
+            0 => "key (vai a foglio google condiviso)", 
         );
 
         private const API_LINK = "https://sheets.googleapis.com/v4/spreadsheets/";
