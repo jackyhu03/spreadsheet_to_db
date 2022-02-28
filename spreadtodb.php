@@ -1,7 +1,7 @@
 <?php 
 
     // Le richieste da parte del client possono essere effettate a questa pagina php
-
+    
     // Esempio richiesta:
     
     // Nome servizio:           spreadtodb.php
@@ -18,18 +18,31 @@
     // sono necessari i parametri INTERVAL in modo da precisare il range di caselle da prendere in considerazione
     // Se nel caso descritto non si inserisce il parametro INTERVAL viene generato un errore 400
 
-    require 'DataStructures/class.googleAPI.php';
+    include 'DataStructures/class.googleAPI.php';
     require 'DataStructures/class.response.php';
     require 'DataStructures/class.sqlc.php';
-
+    
     switch ($_SERVER['REQUEST_METHOD']){
 
         case 'GET': {
             
-            if (isset($_GET['spreadsheeturl'])){
+            
+            // ---> Return found table names
+            if (isset($_GET['spreadsheet_url']) && count($_GET) === 1){
+                $spreadsheet_id = googleAPI::get_spreadsheet_id($_GET['spreadsheet_url']);
+                $spreadsheet_settings = googleAPI::get_spreadsheet_settings($spreadsheet_id);
+                $table_names = googleAPI::get_table_names($spreadsheet_settings);
+                if ($table_names === false) response::client_error(400, "No tables found");
+                else response::successful(200, false, array("spreadsheet_names" => $table_names));
+                exit;
+            }
 
+
+
+            // ---> Return tables data
+            else if (isset($_GET['spreadsheet_url']) && count($_GET) > 1){
                 // Verifica parametri passati 
-                $link = $_GET['spreadsheeturl'];
+                $link = $_GET['spreadsheet_url'];
                 $intervals = array();
                 $table_names = array();
                 for ($i=1; $i<count($_GET); $i++){
@@ -55,11 +68,12 @@
                 
                 $spreadsheet_id = googleAPI::get_spreadsheet_id($link);
                 $sql_ctx = "";
+                $tables = array();
 
                 foreach (array_combine($table_names, $intervals) as $table_name => $interval){
 
                     // Get table (array[][])
-                    $table = googleAPI::get_spreadsheet($spreadsheet_id, $table_name, $interval);
+                    $tables[$table_name] = $table = googleAPI::get_spreadsheet($spreadsheet_id, $table_name, $interval);
 
                     if ($table === false){
                         response::client_error(400, "Il foglio {$table_name} non e' impostato correttamente");
@@ -67,13 +81,27 @@
 
                     // Get sql code for the table
                     $sql_ctx .= sqlc::parseSQL($table_name, $table) . "\n\n";
-                }
-                
-                file_put_contents('database.sql', $sql_ctx);
-
+                }                                       
+                //                               x mostrare al client anteprima tabelle
+                response::successful(200, false, array("tables" => $tables, "SQL" => base64_encode($sql_ctx)));
+                exit;
+                //file_put_contents('database.sql', $sql_ctx);
                 // download database.sql file on client side
                 // response::download_file('database.sql');
             }
+
+
+            
+            // ---> Request for download SQL file
+            else if (isset($_GET['download_data'])){
+                $filename = "database.sql";
+                $base64sql = $_GET['download_data'];
+                file_put_contents($filename, base64_decode($base64sql));
+                response::download_file($filename);
+            }
+
+
+            
 
             break;
         }
@@ -90,6 +118,3 @@
             break;
         }
     }
-    
-
-?>

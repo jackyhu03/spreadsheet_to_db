@@ -65,7 +65,7 @@
             self::send($json, true);
         }
 
-        public static function successful(int $status_code, $status_msg = false, array $array = array()){
+        public static function successful(int $status_code = 200, $status_msg = false, array $array = array()){
 
             if (!self::status_code_valid($status_code, self::ID_SUCCESSFUL)) response::server_error(500);
 
@@ -109,12 +109,25 @@
             );
         }
 
-        private static function send($response, $exit){
+        private static function send($response, bool $exit){
 
             self::ctype('JSON');
             echo $response;
 
-            if ($exit) exit;
+            if ($exit === true) exit;
+        }
+
+        // Il percorso del file passato (che si trova nei file del server) verrà scaricato sul lato client
+        public static function download_file($filename, bool $exit = true){
+            header("Cache-Control: public");
+            header("Content-Description: file transfer");
+            header("Content-Disposition: attachment; filename={$filename}");
+            header("Content-Type: application/zip");
+            header("Content-Transer-Encoding: binary");
+            http_response_code(200);
+            readfile($filename);
+            unlink($filename);
+            if ($exit === true) exit;
         }
     }
     
