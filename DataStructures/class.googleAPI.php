@@ -30,6 +30,7 @@
             $url = self::API_LINK.$spreadsheet_id."/values/".$sheet_name.$interval."?key=".self::KEYS[0];
             $response = request::GET($url);
             $data = self::format_data($response);
+            if ($data === false) return false;
             $status = self::check_data($data);
             return $status ? $data : false;
         }
@@ -38,9 +39,8 @@
         public static function get_spreadsheet_settings(string $spreadsheet_id){
             $url = self::API_LINK.$spreadsheet_id."?key=".self::KEYS[0];
             $response = request::GET($url);
-            $data = self::format_data($response);
-            $status = self::check_data($data);
-            return $status ? $data : false;
+            $array = json_decode($response, true);
+            return gettype($array) === 'array' ? $array : false;
         }
 
         // Get googleSheet's ID from googleSheet's link
@@ -62,6 +62,14 @@
             return true;
         }
 
+        public static function get_table_names(array $spreadsheet_settings){
+            if (count($spreadsheet_settings['sheets']) < 1 || !isset($spreadsheet_settings['sheets'])) return false;
+            $table_names = array();
+            for ($i=0; $i<count($spreadsheet_settings['sheets']); $i++)
+                $table_names[] = $spreadsheet_settings['sheets'][$i]['properties']['title'];
+            return $table_names; 
+        }
+
         // Rimuove righe e colonne vuote (in caso venga passata una tabella non posizionata in alto a sinistra del foglio google)
         // Ritorna array facilmente accessibile 
         private static function format_data(string $json){
@@ -71,6 +79,10 @@
             foreach ($array as $key => $value){
                 if($key !== 'values')
                     $t_array[$key] = $value; 
+            }
+
+            if (!isset($array['values'])){
+                return false; // no data in the sheet
             }
 
             $array = $array['values'];
