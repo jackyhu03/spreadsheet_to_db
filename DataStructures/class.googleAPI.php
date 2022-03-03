@@ -1,15 +1,15 @@
 <?php
 
-   // METODI PUBBLICI (require 'DataStructures/class.googleAPI.php')
+    // METODI PUBBLICI (require 'DataStructures/class.googleAPI.php')
 
-   // googleAPI::get_spreadsheet_settings(id foglio google) 
-   //   -> Ritorna array associativo contenente dati generali foglio google
+    // googleAPI::get_spreadsheet_settings(id foglio google) 
+    //   -> Ritorna array associativo contenente dati generali foglio google
    
-   // googleAPI::get_spreadsheet_id(url foglio google) 
-   //   -> Ritorna ID foglio passando come parametro url foglio google
+    // googleAPI::get_spreadsheet_id(url foglio google) 
+    //   -> Ritorna ID foglio passando come parametro url foglio google
    
-   // googleAPI::get_spreadsheet(id foglio google, nome foglio (foglio1, 2, 3...), intervallo opzionale)
-   //   -> Ritorna tabella richiesta in tipo array (multidimensionale)
+    // googleAPI::get_spreadsheet(id foglio google, nome foglio (foglio1, 2, 3...), intervallo opzionale)
+    //   -> Ritorna tabella richiesta in tipo array (multidimensionale)
     
     require 'class.request.php';
 
@@ -18,7 +18,7 @@
         // Google API available keys
         private const KEYS = array
         (
-            0 => "key (vai a foglio google condiviso)", 
+            0 => "/", 
         );
 
         private const API_LINK = "https://sheets.googleapis.com/v4/spreadsheets/";
@@ -87,29 +87,57 @@
 
             $array = $array['values'];
 
-            // Delete empty rows 
-            $n = 0;
-            while (count($array[$n])===0){
-                unset($array[$n]);
-                $n++; 
+            for ($i=0; $i<count($array); $i++){
+                for ($j=0; $j<count($array[$i]); $j++){
+                    $array[$i][$j] = trim($array[$i][$j]);
+                }
             }
-            unset($n);
+
+            $size = count($array);
+            // Delete empty rows
+            for ($i=0; $i<$size; $i++){
+                if (count($array[$i]) === 0)
+                    unset($array[$i]);
+            }
+            unset($size);
 
             // Reset index 
             $array = array_values($array);
-
+			
+            $size0 = -1; // n columns
             // Delete empty columns 
             for ($i=0; $i<count($array); $i++){
-                $ssize = count($array[$i]);
-                for ($j=0; $j<$ssize; $j++){
-                    if ($array[$i][$j]==="")
-                        unset($array[$i][$j]);
+                if ($i === 0) {
+                    $size0 = count($array[0]);
+                    for ($k=0; $k<$size0; $k++){
+                        if ($array[0][$k]==="")
+                            unset($array[0][$k]);
+                    }
+                    $size0 = count($array[0]);
+                    $akeys = array_keys($array[0]);
+                    $min = $akeys[0];
+                    $max = $akeys[count($akeys)-1];
+                    unset($akeys);
+                    continue;
                 }
-                $array[$i] = array_values($array[$i]);
+                $ssize = count($array[$i]);
+                for ($j=$min; $j<=$max; $j++){
+                    if (!isset($array[$i][$j]))
+                        $array[$i][$j] = "";
+                }
+                for ($j=0; $j<$ssize; $j++){
+                    if ($array[$i][$j]===""){
+                        if ($j < $min || $j > $max){
+                            unset($array[$i][$j]);
+                        }
+                    }
+                }
             }
-            
+
             // Reset index 
-            $array = array_values($array);
+            for ($i=0; $i<count($array); $i++)
+                $array[$i] = array_values($array[$i]);
+            
             return $array;
             /*
                 array[0][0->n] record 0: column names
