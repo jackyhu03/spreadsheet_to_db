@@ -28,8 +28,8 @@
             
             
             // ---> Return found table names
-            if (isset($_GET['spreadsheet_url']) && count($_GET) === 1){
-                $spreadsheet_id = googleAPI::get_spreadsheet_id($_GET['spreadsheet_url']);
+            if (isset($_REQUEST['spreadsheet_url']) && count($_REQUEST) === 1){
+                $spreadsheet_id = googleAPI::get_spreadsheet_id($_REQUEST['spreadsheet_url']);
                 $spreadsheet_settings = googleAPI::get_spreadsheet_settings($spreadsheet_id);
                 $table_names = googleAPI::get_table_names($spreadsheet_settings);
                 if ($table_names === false) response::client_error(400, "No tables found");
@@ -40,16 +40,16 @@
 
 
             // ---> Return tables data
-            else if (isset($_GET['spreadsheet_url']) && count($_GET) > 1){
+            else if (isset($_REQUEST['spreadsheet_url']) && count($_REQUEST) > 1){
                 // Verifica parametri passati 
-                $link = $_GET['spreadsheet_url'];
+                $link = $_REQUEST['spreadsheet_url'];
                 $intervals = array();
                 $table_names = array();
-                for ($i=1; $i<count($_GET); $i++){
-                    if (isset($_GET["TABLE{$i}"])){
-                        $table_names[$i-1] = $_GET["TABLE{$i}"];
-                        if (isset($_GET["INTERVAL{$i}"])){
-                            $intervals[$i-1] = $_GET["INTERVAL{$i}"];
+                for ($i=1; $i<count($_REQUEST); $i++){
+                    if (isset($_REQUEST["TABLE{$i}"])){
+                        $table_names[$i-1] = $_REQUEST["TABLE{$i}"];
+                        if (isset($_REQUEST["INTERVAL{$i}"])){
+                            $intervals[$i-1] = $_REQUEST["INTERVAL{$i}"];
                         }else{
                             $intervals[$i-1] = '';
                         }
@@ -93,9 +93,9 @@
 
             
             // ---> Request for download SQL file
-            else if (isset($_GET['download_data'])){
+            else if (isset($_REQUEST['download_data'])){
                 $filename = "database.sql";
-                $base64sql = $_GET['download_data'];
+                $base64sql = $_REQUEST['download_data'];
                 file_put_contents($filename, base64_decode($base64sql));
                 response::download_file($filename);
             }
@@ -106,7 +106,7 @@
             break;
         }
 
-        case 'POST': {
+        case 'GET': {
 
             break;
         }

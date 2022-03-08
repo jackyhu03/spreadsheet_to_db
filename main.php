@@ -1,19 +1,48 @@
-<?php
-if ($_SERVER["REQUEST_METHOD"] == "POST") 
-{
-    $values = parse_url($_REQUEST["url"]);
-    $path = explode('/', $values["path"]);
-    $key = $path[3];
-    echo $key;
-}
-else{
-?>
-<html>
-    <form class="form" method="post" action="<?php echo $_SERVER['PHP_SELF'];?>">
-    link del foglio:<input id="ins-link" type="text" name="url" required>
-    <button type="submit" class="mandalink">manda link</button>
-    </form>
+<!DOCTYPE html>
+<html lang="en">
+
+    <head>
+        <meta charset="UTF-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Document</title>
+    </head>
+
+    <body>
+        <div>
+            <input id="ins-link" type="text" id="spreadsheet_url" placeholder="googlesheet url" required>
+            <button id="BTN" >manda link</button>
+        </div>
+        <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    </body>
+
+    <script>
+
+        $('#BTN').on('click', () => {
+            alert("");
+            alert( $('#spreadsheet_url').html() );
+            req ( $('#spreadsheet_url').html() );
+        });
+
+        const req = (data) => {
+
+            $.ajax({
+                type: 'GET',
+                url: './spreadtodb.php',
+                data: data,
+                success: (response) => {
+                    console.log(response);
+                },
+                error: (xhr) => {
+                    console.log(xhr);
+            }
+
+        });
+        }
+
+    </script>
+
 </html>
-<?php
-}
-?>
+
+
+
