@@ -18,17 +18,16 @@
     // sono necessari i parametri INTERVAL in modo da precisare il range di caselle da prendere in considerazione
     // Se nel caso descritto non si inserisce il parametro INTERVAL viene generato un errore 400
 
-    include 'DataStructures/class.googleAPI.php';
-    require 'DataStructures/class.response.php';
-    require 'DataStructures/class.sqlc.php';
+    require_once 'resources/class.googleAPI.php';
+    require_once 'resources/class.response.php';
+    require_once 'resources/class.sqlc.php';
     
     switch ($_SERVER['REQUEST_METHOD']){
 
         case 'GET': {
             
-            
             // ---> Return found table names
-            if (isset($_REQUEST['spreadsheet_url']) && count($_REQUEST) === 1){
+            if (isset($_REQUEST['spreadsheet_url']) && count($_GET) === 1){
                 $spreadsheet_id = googleAPI::get_spreadsheet_id($_REQUEST['spreadsheet_url']);
                 $spreadsheet_settings = googleAPI::get_spreadsheet_settings($spreadsheet_id);
                 $table_names = googleAPI::get_table_names($spreadsheet_settings);

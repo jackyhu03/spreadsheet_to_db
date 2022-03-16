@@ -1,0 +1,16 @@
+RewriteEngine on
+RewriteBase /spreadsheet_to_db
+
+RewriteRule ^h$ index.php [L,NC]
+
+# ---> RewriteRule ^service/([a-zA-Z0-9]+)$ service.php?ARG_NAME=$1 [QSA]
+
+<Files .htaccess>
+    Order Allow,Deny
+    Deny from all
+</Files>
+
+<Files README.md>
+    Order Allow,Deny
+    Deny from all
+</Files>
