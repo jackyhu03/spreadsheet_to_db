@@ -3,7 +3,7 @@
 
 School project.
 
-## service URL: 
+## Service URL: 
 - @https://mywebs.altervista.org/spreadsheet_to_db/h
 
 ## Collaborators:
