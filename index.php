@@ -10,7 +10,7 @@
 
     <body>
         <h1 style="text-align: center;">Spreadsheet to SQL</h1>
-        <br><br>
+        <br/><br/>
 
         <div class="sf">
             <input style="width:100%;text-align:center;font-size:20px;" id="spreadsheet_url" type="text"  placeholder="SPREADSHEET URL" required>
