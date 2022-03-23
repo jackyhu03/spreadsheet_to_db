@@ -18,7 +18,7 @@
         // Google API available keys
         private const KEYS = array
         (
-            0 => "/", 
+            0 => "AIzaSyB5ZkKwM2pmiTUH5iEtRCWYjnmn7rHN3i8", 
         );
 
         private const API_LINK = "https://sheets.googleapis.com/v4/spreadsheets/";
@@ -47,6 +47,7 @@
         public static function get_spreadsheet_id(string $url){
             if (!isset($url) || $url === "" || $url === null) return -1;
             $spreadsheet_id = explode("/", $url)[5];
+            if ($spreadsheet_id === NULL) return false;
             return $spreadsheet_id; // spreadsheet ID
         }
 

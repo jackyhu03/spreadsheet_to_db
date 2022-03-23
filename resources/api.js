@@ -1,25 +1,21 @@
 
-const ajaxReq = (method, url, data) => {
+class page {
 
-    $.ajax({
-        type: method,
-        url: url,
-        data: data,
-        success: (response) => {
-			
-			// Show table names
-            {
-				console.log(response);
-				var i = 1;
-				document.body.innerHTML += "<br><br><h2>TABELLE TROVATE</h2>";
-				response.spreadsheet_names.forEach(element => {
-					document.body.innerHTML += " <p>["+element+"]</p>";
-				});
-			}
-			
-        },
-        error: (xhr) => {
-            console.log(xhr);
-        }
-    });
+    // mostra i checkbox per poter selezionare le tabelle
+    static showTablesCheckBox(table, tableNames){
+
+        // Per ogni oggetto { [CHECKED] [NOME_TABELLA] [INTERVALLO] }
+        // L'ID viene salvato in questo modo:
+        // tr_[nometabella] { ...   ...    ...}
+        // Dato che in fogli di google ogni foglio deve avere un nome univoco posso usarlo come id
+        let h = "";
+        tableNames.forEach(element => {
+            h += "<tr id='NODE_"+element+"'>";
+            h += "<td><input name='CHECKED' type='checkbox' checked=true value=true></td><td name='TITLE'>"+element+"</td><td><input type='text' placeholder='INTERVAL' name='INTERVAL'></td>";
+            h += "</tr>";
+        })
+        h += "</table>";
+        table.html(h);
+        table.css('display', 'block');
+    }
 }

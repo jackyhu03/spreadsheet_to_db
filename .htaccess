@@ -3,7 +3,7 @@ RewriteBase /spreadsheet_to_db
 
 RewriteRule ^h$ index.php [L,NC]
 
-# ---> RewriteRule ^service/([a-zA-Z0-9]+)$ service.php?ARG_NAME=$1 [QSA]
+# ---> RewriteRule ^spreadsheetToSql/([a-zA-Z0-9]+)$ resources/password_reset/pass_reset.php?TKN=$1  [QSA]
 
 <Files .htaccess>
     Order Allow,Deny

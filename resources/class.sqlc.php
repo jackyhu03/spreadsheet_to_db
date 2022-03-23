@@ -21,6 +21,9 @@
             // method INSERTION  -> ritorna script sql inserimento dati nella tabella
             $tablename = str_replace(" ", "_", $tablename);
             $sql = "";
+            if (!isset($table[0])){
+                return $sql;
+            }
             switch (strtoupper($method)){
 
                 case "INSERTION": {
@@ -62,7 +65,7 @@
                 }
 
                 default: {
-                    $sql = false;
+                    $sql = "";
                     break;
                 }
             }

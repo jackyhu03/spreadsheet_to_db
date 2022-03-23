@@ -29,6 +29,7 @@
             // ---> Return found table names
             if (isset($_REQUEST['spreadsheet_url']) && count($_GET) === 1){
                 $spreadsheet_id = googleAPI::get_spreadsheet_id($_REQUEST['spreadsheet_url']);
+                if ($spreadsheet_id === false) response::client_error(400, "Incorrect URL");
                 $spreadsheet_settings = googleAPI::get_spreadsheet_settings($spreadsheet_id);
                 $table_names = googleAPI::get_table_names($spreadsheet_settings);
                 if ($table_names === false) response::client_error(400, "No tables found");
@@ -36,10 +37,8 @@
                 exit;
             }
 
-
-
             // ---> Return tables data
-            else if (isset($_REQUEST['spreadsheet_url']) && count($_REQUEST) > 1){
+            else if (isset($_REQUEST['spreadsheet_url']) && count($_GET) > 1){
                 // Verifica parametri passati 
                 $link = $_REQUEST['spreadsheet_url'];
                 $intervals = array();
@@ -80,21 +79,19 @@
 
                     // Get sql code for the table
                     $sql_ctx .= sqlc::parseSQL($table_name, $table) . "\n\n";
-                }                                       
-                //                               x mostrare al client anteprima tabelle
-                response::successful(200, false, array("tables" => $tables, "SQL" => base64_encode($sql_ctx)));
+                }
+                $sql_b64 = base64_encode($sql_ctx);
+                response::successful(200, false, array("tables" => $tables, "sql_b64" => $sql_b64));
                 exit;
-                //file_put_contents('database.sql', $sql_ctx);
-                // download database.sql file on client side
-                // response::download_file('database.sql');
             }
 
 
             
             // ---> Request for download SQL file
-            else if (isset($_REQUEST['download_data'])){
+            else if (isset($_REQUEST['SQL_B64'])){
+                
                 $filename = "database.sql";
-                $base64sql = $_REQUEST['download_data'];
+                $base64sql = $_REQUEST['SQL_B64'];
                 file_put_contents($filename, base64_decode($base64sql));
                 response::download_file($filename);
             }
