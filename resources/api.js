@@ -1,4 +1,3 @@
-
 class page {
 
     // mostra i checkbox per poter selezionare le tabelle
@@ -17,5 +16,25 @@ class page {
         h += "</table>";
         table.html(h);
         table.css('display', 'block');
+    }
+    static showTables(table){
+      let h = "";
+      h += '<div class="tbl-header"><table cellpadding="0" cellspacing="0" border="0"><thead><tr>';
+      for(let j = 0; j < table[0].length; j++) {
+        h += "<th>"+table[0][j]+"</th>";
+      }
+      h += '</tr></thead></table></div><div class="tbl-content"><table cellpadding="0" cellspacing="0" border="0"><tbody>';
+      var i=1;
+      for(let i = 1; i < table.length; i++) {
+        h += "<tr>";
+        for(let j = 0; j < table[i].length; j++) {
+          h += "<td>"+table[i][j]+"</td>";
+          console.log(table[i][j]);
+        }
+        h += "</tr>";
+      }
+      h += '</tbody></table></div>';
+      table.html(h);
+      table.css('display', 'block');
     }
 }
