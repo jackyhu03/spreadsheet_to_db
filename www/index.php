@@ -19,7 +19,7 @@
         <input id="BTN1" type="button" value='SEND' style="display:none"></table>
         <p id="pino"></p>
         <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
-        <script src="https://mywebs.altervista.org/spreadsheet_to_db/resources/api.js"></script>
+        <script src="resources/api.js"></script>
     </body>
 
     <script>
@@ -65,7 +65,7 @@
         // risposta i dati delle tabelle richieste
         // per adesso visualizza dati tabelle solo in console
         $('#BTN1').on('click', () => {
-            
+
             $.ajax({
                 type: 'GET',
                 url: './server.php',
@@ -73,13 +73,16 @@
                 success: (response) => {
                     // per ogni tabella vengono mostrati i dati, ritornati dalla richiesta
                     const tables = response.tables;
+                    $('#TBL0').css('display', 'none');
+                    $('#BTN1').css('display', 'none');
                     buffer.spreadsheet_names.forEach(tableName => {
                         if (tables[tableName] !== undefined){
                             
                             // tables[tableName][index_riga][index_colonna]
                             // tables[tableName][0][...] => NOMI COLONNE
                             // tables[tableName][1->n][...] => Righe effettive tabella
-                            showTables(tables[tableName]);
+                            console.log(tables[tableName]);
+                            page.showTable(tables[tableName], document);
                             //console.log(tables[tableName]);
                         }
                     });
@@ -90,26 +93,6 @@
             });
         });
 
-        function showTables(table)
-        {
-            let h = "";
-             h += '<div class="tbl-header"><table cellpadding="0" cellspacing="0" border="0"><thead><tr>';
-            for(let j = 0; j < table[0].length; j++) {
-                h += "<th>"+table[0][j]+"</th>";
-            }
-            h += '</tr></thead></table></div><div class="tbl-content"><table cellpadding="0" cellspacing="0" border="0"><tbody>';
-            var i=1;
-            for(let i = 1; i < table.length; i++) {
-                h += "<tr>";
-                for(let j = 0; j < table[i].length; j++) {
-                    h += "<td>"+table[i][j]+"</td>";
-                    console.log(table[i][j]);
-                    }
-                h += "</tr>";
-            }
-            h += '</tbody></table></div>';
-            document.body.innerHTML += h;
-        }
         const getParameters = () => {
             // [TABLE1] [INTERVAL1]
             // [TABLE2] [INTERVAL2]

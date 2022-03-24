@@ -17,7 +17,8 @@ class page {
         table.html(h);
         table.css('display', 'block');
     }
-    static showTables(table){
+
+    static showTable(table, document){
       let h = "";
       h += '<div class="tbl-header"><table cellpadding="0" cellspacing="0" border="0"><thead><tr>';
       for(let j = 0; j < table[0].length; j++) {
@@ -34,7 +35,6 @@ class page {
         h += "</tr>";
       }
       h += '</tbody></table></div>';
-      table.html(h);
-      table.css('display', 'block');
+      document.body.innerHTML += h;
     }
 }
