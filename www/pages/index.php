@@ -21,7 +21,20 @@
         $name =  $google_account_info->name;
         $data = array($email, $name);
         $access_token = $token['access_token'];
-        setcookie("access_token", $access_token, time()+3600, "/", "gitpod.io");
+        
+        if (isset($_COOKIE["gs_id_403"]))
+        {
+            if (GoogleAPI::spreadsheet_permission($_COOKIE["gs_id_403"]) === false)
+            {
+                echo "<h1>Non autorizzato...</h1><br>";
+                echo "<h3>L'email $email non ha accesso ai dati richiesti</h3>";
+                echo "<span> clicca <a href='{$_SERVER['PHP_SELF']}'>qui</a> per tornare alla home page</span>";
+                setcookie("gs_id_403", false, time()-3600, "/", "gitpod.io");
+                exit;
+            }
+        }
+
+        setcookie("atkn", $access_token, time()+3600, "/", "gitpod.io");
         echo "<h1>Ti sei autenticato</h1>";
         echo "<span> clicca <a href='{$_SERVER['PHP_SELF']}'>qui</a> per tornare alla home page</span>";
         exit;
@@ -95,8 +108,8 @@
                 error: (xhr) => {
                     if (xhr.responseJSON.status_message === "PERMISSION_DENIED" && xhr.responseJSON.status_code === 403){
                         localStorage.setItem("url_403", $('#spreadsheet_url').val());
-                        document.body.innerHTML = "<h2>E' richiesto l'accesso</h2>";
-                        document.body.innerHTML += "<a href='<?php echo GoogleClient::get_object()->createAuthUrl(); ?>'>clicca qui</a>";
+                        document.body.innerHTML = "<h2>Per effettuare questa richiesta e' necessario accedere con un account Google</h2>";
+                        document.body.innerHTML += "<span><a href='<?php echo GoogleClient::get_object()->createAuthUrl(); ?>'>clicca qui</a> per accedere</span>";
                     }
                     else
                     document.body.innerHTML = JSON.stringify(xhr.responseJSON);

@@ -1,16 +1,13 @@
 RewriteEngine on
-RewriteBase /spreadsheet_to_db
+#RewriteBase /spreadsheet_to_db
+#RewriteBase /
 
-RewriteRule ^h$ index.php [L,NC]
+RewriteRule ^home$ pages/index.php [L,NC]
+RewriteRule ^h$ pages/index.php [L,NC]
 
 # ---> RewriteRule ^spreadsheetToSql/([a-zA-Z0-9]+)$ resources/password_reset/pass_reset.php?TKN=$1  [QSA]
 
 <Files .htaccess>
-    Order Allow,Deny
-    Deny from all
-</Files>
-
-<Files README.md>
     Order Allow,Deny
     Deny from all
 </Files>

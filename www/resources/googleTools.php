@@ -29,7 +29,7 @@
         public static function get_spreadsheet(string $spreadsheet_id, string $sheet_name, string $interval = ''){
             if ($interval !== '') $interval = "!".$interval;
             $url = self::API_LINK.$spreadsheet_id."/values/".$sheet_name.$interval."?key=".self::KEYS[0];
-            $req = new ARequest($url, self::get_atoken());
+            $req = new ARequest($url, self::get_atkn());
             $response = $res->send();
             $data = self::format_data($response);
             if ($data === false) return false;
@@ -40,7 +40,7 @@
         // Global settings
         public static function get_spreadsheet_settings(string $spreadsheet_id){
             $url = self::API_LINK.$spreadsheet_id."?key=".self::KEYS[0];
-            $req = new ARequest($url, self::get_atoken());
+            $req = new ARequest($url, self::get_atkn());
             $req->send();
             $array = json_decode($req->get_response(), true);
             return gettype($array) === 'array' ? $array : false;
@@ -48,9 +48,11 @@
 
         public static function spreadsheet_permission($spreadsheet_id){
             $url = self::API_LINK.$spreadsheet_id."?key=".self::KEYS[0];
-            $req = new ARequest($url, self::get_atoken());
+            $req = new ARequest($url, self::get_atkn());
             $req->send();
             $array = json_decode($req->get_response(), true);
+
+            setcookie("gs_id_403", $spreadsheet_id, time()+1000, "/", "gitpod.io");
 
             if ($array['error']['code'] === 403 && $array['error']['status'] === "PERMISSION_DENIED"){
                 return false;                
@@ -58,8 +60,8 @@
             else return true;
         }
 
-        private static function get_atoken(){
-            return isset($_COOKIE['access_token'])? $_COOKIE['access_token'] : 0; 
+        private static function get_atkn(){
+            return isset($_COOKIE['atkn'])? $_COOKIE['atkn'] : 0; 
         }
 
         // Get googleSheet's ID from googleSheet's link
