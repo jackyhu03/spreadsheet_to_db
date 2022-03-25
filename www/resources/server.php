@@ -77,13 +77,12 @@
 
                     // Get table (array[][])
                     $tables[$table_name] = $table = GoogleAPI::get_spreadsheet($spreadsheet_id, $table_name, $interval);
-
                     if ($table === false){
                         response::client_error(400, "Il foglio {$table_name} non e' impostato correttamente");
                     }
 
                     // Get sql code for the table
-                    $sql_ctx .= sqlc::parseSQL($table_name, $table) . "\n\n";
+                    //$sql_ctx .= sqlc::parseSQL($table_name, $table) . "\n\n";
                 }
                 $sql_b64 = base64_encode($sql_ctx);
                 response::successful(200, false, array("tables" => $tables, "sql_b64" => $sql_b64));

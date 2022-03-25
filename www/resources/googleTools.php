@@ -14,6 +14,8 @@
     require_once 'requestTools.php';
     //require_once 'OAuth/google/vendor/autoload.php';
 
+    //https://sheets.googleapis.com/v4/spreadsheets/13p3_l3bnNjV0K9MuTl2_M37n-0bYySLan2fdpDNeoiY?ranges=TABELLA1!A1:C16&fields=sheets(data(rowData(values(userEnteredFormat%2FnumberFormat%2CuserEnteredValue))%2CstartColumn%2CstartRow))&key=AIzaSyAxrhJVQNqFD43MjLPLlj55OlLXs7yUqJw
+
     class GoogleAPI {
 
         // Google API available keys
@@ -24,16 +26,30 @@
 
         private const API_LINK = "https://sheets.googleapis.com/v4/spreadsheets/";
 
+        public static function get_url_4vals($api_link, $spreadsheet_id, $ranges, $key){
+            return "{$api_link}{$spreadsheet_id}?ranges={$ranges}&fields=sheets(data(rowData(values(userEnteredFormat%2FnumberFormat%2CuserEnteredValue))%2CstartColumn%2CstartRow))&key={$key}";
+        }
+
+        private static function parseDate($serial_date, $pattern = "d/m/Y"){
+            $timestamp = ($serial_date - 25569) * 86400;
+            return date($pattern, $timestamp);
+        }
+
+        public static function test_request($spreadsheet_id){
+            $url = get_url_4vals(self::API_LINK, $spreadsheet_id, "");
+
+        }
+
         // Get table values (array)   $sheet_name = nome foglio, interval = [AN:BM]
         // -> vai a format data per vedere come accedere ai valori restituiti
         public static function get_spreadsheet(string $spreadsheet_id, string $sheet_name, string $interval = ''){
             if ($interval !== '') $interval = "!".$interval;
-            $url = self::API_LINK.$spreadsheet_id."/values/".$sheet_name.$interval."?key=".self::KEYS[0];
+            $url = self::get_url_4vals(self::API_LINK, $spreadsheet_id, $sheet_name.$interval, self::KEYS[0]);
             $req = new ARequest($url, self::get_atkn());
-            $response = $res->send();
-            $data = self::format_data($response);
+            $response = $req->send();
+            $data = self::format_data_adv($response);
             if ($data === false) return false;
-            $status = self::check_data($data);
+            $status = self::check_data_adv($data);
             return $status ? $data : false;
         }
 
@@ -78,6 +94,16 @@
             for ($i=1; $i<count($array); $i++){
                 if (count($array[$i]) !== $n){
                     // Trovate righe con numero di colonne differente
+                    return false;
+                }
+            }
+            return true;
+        }
+
+        private static function check_data_adv(array $m){
+            $n = count($array[0]);
+            for ($i=1; $i<count($m); $i++){
+                if (count($array[$i]) !== $n){
                     return false;
                 }
             }
@@ -168,7 +194,95 @@
                 [...]
             */
         }
+
+        private static function format_data_adv($json){
+
+            $array = (json_decode($json, true));
+
+            $array = $array['sheets'][0]['data'][0]['rowData'];
+            for ($i=0; $i<count($array); $i++) if (empty($array[$i])) unset($array[$i]);
+
+            $array = array_values($array);
+
+            for ($i=0; $i<count($array); $i++){
+                if (isset($array[$i]['values'])){
+                    for ($j=0; $j<count($array[$i]['values']); $j++){
+                        if (empty($array[$i]['values'][$j])){
+                            $array[$i]['values'][$j] = "";
+                        }
+                    }
+                    $array[$i]['values'] = array_values($array[$i]['values']);
+                }
+            }
+
+            $matrix = array();
+            $ncols = count($array[0]['values']);
+
+            for ($i=0; $i<count($array); $i++){
+                $k = 0;
+                for ($j=0; $j<$ncols; $j++){
+                    $matrix[$i][$j] = isset($array[$i]['values'][$j]['userEnteredValue']) ? $array[$i]['values'][$j]['userEnteredValue'] : array("NULL" => "NULL");
+                    if (isset($array[$i]['values'][$j]['userEnteredFormat']['numberFormat']['type'])){
+                        if ($array[$i]['values'][$j]['userEnteredFormat']['numberFormat']['type'] === 'DATE'){
+                            $type = $array[$i]['values'][$j]['userEnteredFormat']['numberFormat']['type'];
+                            $matrix[$i][$j] = array($type => self::parseDate($array[$i]['values'][$j]['userEnteredValue']['numberValue'])); 
+                        }
+                    }
+                }
+            }
+
+            $matrix = array_values($matrix);
+            $m = array();
+
+            for ($i=0; $i<count($matrix); $i++){
+                for ($j=0; $j<count($matrix[$i]); $j++){
+                    foreach ($matrix[$i][$j] as $key => $value){
+                        $m[$i][$j]["value"] = $value;
+                        $m[$i][$j]["type"] = $key;
+                    }
+                }
+            }
+
+            $index = array();
+            for ($i=0; $i<count($m[0]); $i++){
+
+                if ($m[0][$i]['value'] === "NULL")
+                    unset($m[0][$i]);
+                else { $index[] = $i; }
+            }
+            $m[0] = array_values($m[0]);
+
+            $min = $index[0];
+            $max = $index[count($index)-1];
+            unset($index);
+
+            for ($i=1; $i<count($m); $i++){
+                $n = count($m[$i]);
+                for ($j=0; $j<$n; $j++){
+                    if ($m[$i][$j]['value'] === "NULL" && $j < 4 || j > 6)
+                        unset($m[$i][$j]);
+                }
+                $m[$i] = array_values($m[$i]);
+            }
+
+            for ($i=1; $i<count($m); $i++){
+                $t = 0;
+                $len = count($m[$i]);
+                for ($j=0; $j<$len; $j++){
+                    if ($m[$i][$j]['value'] === 'NULL'){
+                        $t++;
+                    }
+                }
+                if ($t === $len){
+                    unset($m[$i]);
+                }
+            }
+
+            return $m;
+        }
     }
+
+
 
     class GoogleClient {
 
