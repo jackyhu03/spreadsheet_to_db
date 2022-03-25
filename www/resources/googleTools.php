@@ -10,10 +10,8 @@
    
     // googleAPI::get_spreadsheet(id foglio google, nome foglio (foglio1, 2, 3...), intervallo opzionale)
     //   -> Ritorna tabella richiesta in tipo array (multidimensionale)
-    
-    require 'class.request.php';
 
-    class googleAPI {
+    class GoogleAPI {
 
         // Google API available keys
         private const KEYS = array
@@ -38,9 +36,15 @@
         // Global settings
         public static function get_spreadsheet_settings(string $spreadsheet_id){
             $url = self::API_LINK.$spreadsheet_id."?key=".self::KEYS[0];
-            $response = request::GET($url);
-            $array = json_decode($response, true);
             return gettype($array) === 'array' ? $array : false;
+        }
+
+        public static function check_spreadsheet_permission($spreadsheet_id){
+            $url = self::API_LINK.$spreadsheet_id."?key=".self::KEYS[0];
+            $response = request::GET($url);
+            if ($response['error']['status'] === 403 && $response['error']['message'] === "PERMISSION_DENIED"){
+                
+            }
         }
 
         // Get googleSheet's ID from googleSheet's link
@@ -104,7 +108,7 @@
 
             // Reset index 
             $array = array_values($array);
-			
+            
             $size0 = -1; // n columns
             // Delete empty columns 
             for ($i=0; $i<count($array); $i++){
@@ -149,16 +153,43 @@
         }
     }
 
-    // X testing (stampa matrice in chiaro)
-    function print_table($table){
-        $str = "";
-        for ($i=0; $i<count($table); $i++){
-            $str .= " | ";
-            for ($j=0; $j<count($table[$i]); $j++) $str .= $table[$i][$j] . " | ";
-            if ($i === 0) $str .= "<br>----------------------------------------------------------------<br>";
-            else $str .= "<br>";
+    class GoogleClient {
+
+        public static function get_object(){
+
+            $client = new Google_Client();
+            $client->setClientId(self::get_client_id());
+            $client->setClientSecret(self::get_client_secret());
+            $client->setRedirectUri(self::get_redirect_uri());
+            $client->addScope('profile');
+            $client->addScope('email');
+            
+            return $client;
         }
-        echo $str;
+
+        private static function get_client_id(){
+            //sqlc::connect();
+            //$qry = "SELECT `value` FROM `S2DB_env` WHERE `key` = 'CLIENT_ID'";
+            //$value = sqlc::qry_exec($qry)['value'];
+            $value = "";
+            return $value;
+        }
+
+        private static function get_client_secret(){
+            //sqlc::connect();
+            //$qry = "SELECT `value` FROM `S2DB_env` WHERE `key` = 'CLIENT_SECRET'";
+            //$value = sqlc::qry_exec($qry)['value'];
+            $value = "";
+            return $value;
+        }
+
+        private static function get_redirect_uri(){
+            //sqlc::connect();
+            //$qry = "SELECT `value` FROM `S2DB_env` WHERE `key` = 'REDIRECT_URI'";
+            //$value = sqlc::qry_exec($qry)['value'];
+            $value = "";
+            return $value;
+        }
     }
 
 ?>

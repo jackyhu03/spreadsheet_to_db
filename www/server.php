@@ -30,6 +30,7 @@
             if (isset($_REQUEST['spreadsheet_url']) && count($_GET) === 1){
                 $spreadsheet_id = googleAPI::get_spreadsheet_id($_REQUEST['spreadsheet_url']);
                 if ($spreadsheet_id === false) response::client_error(400, "Incorrect URL");
+                else googleAPI::check_sheet_permission($spreadsheet_id);
                 $spreadsheet_settings = googleAPI::get_spreadsheet_settings($spreadsheet_id);
                 $table_names = googleAPI::get_table_names($spreadsheet_settings);
                 if ($table_names === false) response::client_error(400, "No tables found");
