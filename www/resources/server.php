@@ -18,9 +18,9 @@
     // sono necessari i parametri INTERVAL in modo da precisare il range di caselle da prendere in considerazione
     // Se nel caso descritto non si inserisce il parametro INTERVAL viene generato un errore 400
 
-    require_once 'resources/class.googleAPI.php';
-    require_once 'resources/class.response.php';
-    require_once 'resources/class.sqlc.php';
+    require_once 'googleTools.php';
+    require_once 'class.response.php';
+    require_once 'sqlTools.php';
     
     switch ($_SERVER['REQUEST_METHOD']){
 
@@ -28,11 +28,15 @@
             
             // ---> Return found table names
             if (isset($_REQUEST['spreadsheet_url']) && count($_GET) === 1){
-                $spreadsheet_id = googleAPI::get_spreadsheet_id($_REQUEST['spreadsheet_url']);
+                $spreadsheet_id = GoogleAPI::get_spreadsheet_id($_REQUEST['spreadsheet_url']);
                 if ($spreadsheet_id === false) response::client_error(400, "Incorrect URL");
-                else googleAPI::check_sheet_permission($spreadsheet_id);
-                $spreadsheet_settings = googleAPI::get_spreadsheet_settings($spreadsheet_id);
-                $table_names = googleAPI::get_table_names($spreadsheet_settings);
+                
+                else if (GoogleAPI::spreadsheet_permission($spreadsheet_id) === false){
+                    response::client_error(403, "PERMISSION_DENIED");
+                }
+
+                $spreadsheet_settings = GoogleAPI::get_spreadsheet_settings($spreadsheet_id);
+                $table_names = GoogleAPI::get_table_names($spreadsheet_settings);
                 if ($table_names === false) response::client_error(400, "No tables found");
                 else response::successful(200, false, array("spreadsheet_names" => $table_names));
                 exit;
@@ -65,14 +69,14 @@
                     response::client_error(400, "Wrong or incorrect parameters");
                 }
                 
-                $spreadsheet_id = googleAPI::get_spreadsheet_id($link);
+                $spreadsheet_id = GoogleAPI::get_spreadsheet_id($link);
                 $sql_ctx = "";
                 $tables = array();
 
                 foreach (array_combine($table_names, $intervals) as $table_name => $interval){
 
                     // Get table (array[][])
-                    $tables[$table_name] = $table = googleAPI::get_spreadsheet($spreadsheet_id, $table_name, $interval);
+                    $tables[$table_name] = $table = GoogleAPI::get_spreadsheet($spreadsheet_id, $table_name, $interval);
 
                     if ($table === false){
                         response::client_error(400, "Il foglio {$table_name} non e' impostato correttamente");

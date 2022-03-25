@@ -63,6 +63,7 @@
     }
 
 
+    // classe statica per richieste veloci
     class request {
 
         // Ritorna JSON string

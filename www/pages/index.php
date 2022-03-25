@@ -1,3 +1,35 @@
+<?php
+
+    require_once "../resources/class.response.php";
+    require_once '../resources/googleTools.php';
+    require_once '../resources/OAuth/google/vendor/autoload.php';
+
+    if (isset($_GET['code']))
+    {
+        $client = GoogleClient::get_object();
+        $token = $client->fetchAccessTokenWithAuthCode($_GET['code']);
+        
+        try {
+            $client->setAccessToken($token['access_token']);
+        } catch (Exception $e){
+            response::client_error(400, "Invalid URL");
+        };
+
+        $google_oauth = new Google_Service_Oauth2($client);
+        $google_account_info = $google_oauth->userinfo->get();
+        $email =  $google_account_info->email;
+        $name =  $google_account_info->name;
+        $data = array($email, $name);
+        $access_token = $token['access_token'];
+        setcookie("access_token", $access_token, time()+3600, "/", "gitpod.io");
+        echo "<h1>Ti sei autenticato</h1>";
+        echo "<span> clicca <a href='{$_SERVER['PHP_SELF']}'>qui</a> per tornare alla home page</span>";
+        exit;
+    }
+
+?>
+
+
 <!DOCTYPE html>
 <html lang="en">
 
@@ -19,11 +51,16 @@
         <input id="BTN1" type="button" value='SEND' style="display:none"></table>
         <p id="pino"></p>
         <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
-        <script src="resources/api.js"></script>
+        <script src="../resources/api.js"></script>
     </body>
 
     <script>
         
+        $(document).ready(() => {
+            $('#spreadsheet_url').val(localStorage.getItem("url_403"));   
+            localStorage.removeItem("url_403");    
+        });
+
         // variabile globale per tenere in memoria URL, nomi tabelle...
         var buffer = {};
 
@@ -40,7 +77,8 @@
 
             $.ajax({
                 type: 'GET',
-                url: './server.php',
+                url: '../resources/server.php',
+                crossDomain: true,
                 data: { spreadsheet_url: $('#spreadsheet_url').val() },
                 success: (response) => {
                     
@@ -55,6 +93,12 @@
                     $('#BTN1').css('display', 'block');
                 },
                 error: (xhr) => {
+                    if (xhr.responseJSON.status_message === "PERMISSION_DENIED" && xhr.responseJSON.status_code === 403){
+                        localStorage.setItem("url_403", $('#spreadsheet_url').val());
+                        document.body.innerHTML = "<h2>E' richiesto l'accesso</h2>";
+                        document.body.innerHTML += "<a href='<?php echo GoogleClient::get_object()->createAuthUrl(); ?>'>clicca qui</a>";
+                    }
+                    else
                     document.body.innerHTML = JSON.stringify(xhr.responseJSON);
                 }
             });
@@ -68,7 +112,7 @@
 
             $.ajax({
                 type: 'GET',
-                url: './server.php',
+                url: '../resources/server.php',
                 data: getParameters(), // ottiene nomi tabelle ed eventuali intervalli selezionati
                 success: (response) => {
                     // per ogni tabella vengono mostrati i dati, ritornati dalla richiesta
@@ -89,6 +133,7 @@
                 },
                 error: (xhr) => {
                     document.body.innerHTML = JSON.stringify(xhr.responseJSON);
+
                 }
             });
         });

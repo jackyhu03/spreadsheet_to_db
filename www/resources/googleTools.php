@@ -11,12 +11,15 @@
     // googleAPI::get_spreadsheet(id foglio google, nome foglio (foglio1, 2, 3...), intervallo opzionale)
     //   -> Ritorna tabella richiesta in tipo array (multidimensionale)
 
+    require_once 'requestTools.php';
+    //require_once 'OAuth/google/vendor/autoload.php';
+
     class GoogleAPI {
 
         // Google API available keys
         private const KEYS = array
         (
-            0 => "AIzaSyB5ZkKwM2pmiTUH5iEtRCWYjnmn7rHN3i8", 
+            0 => "AIzaSyBr_2TRtx0qm-Ey_wjxSgT0y8owE33HJP0", 
         );
 
         private const API_LINK = "https://sheets.googleapis.com/v4/spreadsheets/";
@@ -26,7 +29,8 @@
         public static function get_spreadsheet(string $spreadsheet_id, string $sheet_name, string $interval = ''){
             if ($interval !== '') $interval = "!".$interval;
             $url = self::API_LINK.$spreadsheet_id."/values/".$sheet_name.$interval."?key=".self::KEYS[0];
-            $response = request::GET($url);
+            $req = new ARequest($url, self::get_atoken());
+            $response = $res->send();
             $data = self::format_data($response);
             if ($data === false) return false;
             $status = self::check_data($data);
@@ -36,15 +40,26 @@
         // Global settings
         public static function get_spreadsheet_settings(string $spreadsheet_id){
             $url = self::API_LINK.$spreadsheet_id."?key=".self::KEYS[0];
+            $req = new ARequest($url, self::get_atoken());
+            $req->send();
+            $array = json_decode($req->get_response(), true);
             return gettype($array) === 'array' ? $array : false;
         }
 
-        public static function check_spreadsheet_permission($spreadsheet_id){
+        public static function spreadsheet_permission($spreadsheet_id){
             $url = self::API_LINK.$spreadsheet_id."?key=".self::KEYS[0];
-            $response = request::GET($url);
-            if ($response['error']['status'] === 403 && $response['error']['message'] === "PERMISSION_DENIED"){
-                
+            $req = new ARequest($url, self::get_atoken());
+            $req->send();
+            $array = json_decode($req->get_response(), true);
+
+            if ($array['error']['code'] === 403 && $array['error']['status'] === "PERMISSION_DENIED"){
+                return false;                
             }
+            else return true;
+        }
+
+        private static function get_atoken(){
+            return isset($_COOKIE['access_token'])? $_COOKIE['access_token'] : 0; 
         }
 
         // Get googleSheet's ID from googleSheet's link
@@ -163,7 +178,12 @@
             $client->setRedirectUri(self::get_redirect_uri());
             $client->addScope('profile');
             $client->addScope('email');
-            
+            $client->addScope("https://www.googleapis.com/auth/drive");
+            $client->addScope("https://www.googleapis.com/auth/drive.file");
+            $client->addScope("https://www.googleapis.com/auth/drive.readonly");
+            $client->addScope("https://www.googleapis.com/auth/spreadsheets");
+            $client->addScope("https://www.googleapis.com/auth/spreadsheets.readonly");
+
             return $client;
         }
 
@@ -171,7 +191,7 @@
             //sqlc::connect();
             //$qry = "SELECT `value` FROM `S2DB_env` WHERE `key` = 'CLIENT_ID'";
             //$value = sqlc::qry_exec($qry)['value'];
-            $value = "";
+            $value = "840496728901-a9saji4i1tg8jhaia3sbb8saea8arii3.apps.googleusercontent.com";
             return $value;
         }
 
@@ -179,7 +199,7 @@
             //sqlc::connect();
             //$qry = "SELECT `value` FROM `S2DB_env` WHERE `key` = 'CLIENT_SECRET'";
             //$value = sqlc::qry_exec($qry)['value'];
-            $value = "";
+            $value = "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";
             return $value;
         }
 
@@ -187,7 +207,7 @@
             //sqlc::connect();
             //$qry = "SELECT `value` FROM `S2DB_env` WHERE `key` = 'REDIRECT_URI'";
             //$value = sqlc::qry_exec($qry)['value'];
-            $value = "";
+            $value = "https://4500-junnkun-spreadsheettodb-jl91e12r6i3.ws-eu38.gitpod.io/pages/index.php";
             return $value;
         }
     }

@@ -152,7 +152,7 @@ class Client
           'login_hint' => '',
           'request_visible_actions' => '',
           'access_type' => 'online',
-          'approval_prompt' => 'auto',
+          'approval_prompt' => 'force',
 
           // Task Runner retry configuration
           // @see Google\Task\Runner
@@ -663,7 +663,7 @@ class Client
    */
   public function setApprovalPrompt($approvalPrompt)
   {
-    $this->config['approval_prompt'] = $approvalPrompt;
+    $this->config['approval_prompt'] = "$approvalPrompt";
   }
 
   /**
