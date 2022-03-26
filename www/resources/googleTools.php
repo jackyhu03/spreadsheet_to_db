@@ -281,6 +281,8 @@
                 }
             }
 
+            $m = array_values($m);
+
             return $m;
         }
     }
