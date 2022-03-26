@@ -30,9 +30,9 @@
                     $cnames = "(";
                     for ($i=0; $i<count($table[0]); $i++){
                         if ($i === count($table[0])-1)
-                            $cnames .= str_replace(" ", "_", $table[0][$i]) . ")";
+                            $cnames .= str_replace(" ", "_", $table[0][$i]['value']) . ")";
                         else
-                            $cnames .= str_replace(" ", "_", $table[0][$i]) . ", ";    
+                            $cnames .= str_replace(" ", "_", $table[0][$i]['value']) . ", ";    
                     }
                     $vnames = "";
                     for ($i=1; $i<count($table); $i++){
@@ -40,11 +40,11 @@
                         for ($j=0; $j<count($table[0]); $j++){
                             if ($j === count($table[0])-1)
                                 if ($i === count($table)-1)
-                                    $vnames .= "'" . str_replace(" ", "_", $table[$i][$j]) . "'" . ")";
+                                    $vnames .= "'" . str_replace(" ", "_", $table[$i][$j]['value']) . "'" . ")";
                                 else
-                                    $vnames .= "'" . str_replace(" ", "_", $table[$i][$j]) . "'" . "), ";
+                                    $vnames .= "'" . str_replace(" ", "_", $table[$i][$j]['value']) . "'" . "), ";
                             else
-                                $vnames .= "'" . str_replace(" ", "_", $table[$i][$j]) . "'" . ", ";
+                                $vnames .= "'" . str_replace(" ", "_", $table[$i][$j]['value']) . "'" . ", ";
                         }    
                     }
             
@@ -56,9 +56,9 @@
                     $sql = "CREATE TABLE {$tablename} (";
                     for ($i=0; $i<count($table[0]); $i++){
                         if ($i === count($table[0])-1)
-                            $sql .= str_replace(" ", "_", $table[0][$i]) . " VARCHAR(255) NOT NULL";
+                            $sql .= str_replace(" ", "_", $table[0][$i]['value']) . " VARCHAR(255) NOT NULL";
                         else
-                            $sql .= str_replace(" ", "_", $table[0][$i]) . " VARCHAR(255) NOT NULL, ";
+                            $sql .= str_replace(" ", "_", $table[0][$i]['value']) . " VARCHAR(255) NOT NULL, ";
                     }
                     $sql .= ");";
                     break;

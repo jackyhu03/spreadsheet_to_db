@@ -73,6 +73,8 @@
                 $sql_ctx = "";
                 $tables = array();
 
+                $table_ctx = "";
+
                 foreach (array_combine($table_names, $intervals) as $table_name => $interval){
 
                     // Get table (array[][])
@@ -84,20 +86,34 @@
                     // Get sql code for the table
                     //$sql_ctx .= sqlc::parseSQL($table_name, $table) . "\n\n";
                 }
+
+                $table_ctx .= json_encode($tables);
+
                 $sql_b64 = base64_encode($sql_ctx);
-                response::successful(200, false, array("tables" => $tables, "sql_b64" => $sql_b64));
+                $tables_b64 = base64_encode($table_ctx);
+
+                response::successful(200, false, array("tables_b64" => $tables_b64));
                 exit;
             }
 
 
-            
             // ---> Request for download SQL file
-            else if (isset($_REQUEST['SQL_B64'])){
+            else if (isset($_REQUEST['TABLES_B64']) && isset($_REQUEST['SHEET_NAMES'])){
+
+                $table_ctx = base64_decode($_REQUEST['TABLES_B64']);
+
+                $tables = json_decode($table_ctx, true);
+                $names = $_REQUEST['SHEET_NAMES'];
+
+                $sql_ctx = "";
                 
+                foreach ($names as $name){
+                    $sql_ctx .= sqlc::parseSQL($name, $tables[$name]) . "\n\n";
+                }
+
                 $filename = "database.sql";
-                $base64sql = $_REQUEST['SQL_B64'];
-                file_put_contents($filename, base64_decode($base64sql));
-                response::download_file($filename);
+                file_put_contents($filename, "ciao 123");
+                response::download_file($filename, true);
             }
 
 

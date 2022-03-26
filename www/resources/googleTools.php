@@ -245,7 +245,7 @@
 
             $index = array();
             foreach($m[0] as $key => $value){
-                if ($m[0][$key]['value'] === "NULL")
+                if ($m[0][$key]['value'] === "NULL" && $m[0][$key]['type'] === "NULL")
                     unset($m[0][$key]);
                 else
                     $index[] = $key;
@@ -272,7 +272,7 @@
                 $t = 0;
                 $len = count($m[$i]);
                 for ($j=0; $j<$len; $j++){
-                    if ($m[$i][$j]['value'] === 'NULL'){
+                    if ($m[$i][$j]['value'] === 'NULL' && $m[$i][$j]['type'] === 'NULL'){
                         $t++;
                     }
                 }
@@ -310,7 +310,7 @@
 
         private static function get_client_id(){
             //sqlc::connect();
-            //$qry = "SELECT `value` FROM `S2DB_env` WHERE `key` = 'CLIENT_ID'";
+            //$qry = "SELECT `value` FROM `GS2DB_env` WHERE `key` = 'CLIENT_ID'";
             //$value = sqlc::qry_exec($qry)['value'];
             $value = "840496728901-a9saji4i1tg8jhaia3sbb8saea8arii3.apps.googleusercontent.com";
             return $value;
@@ -318,7 +318,7 @@
 
         private static function get_client_secret(){
             //sqlc::connect();
-            //$qry = "SELECT `value` FROM `S2DB_env` WHERE `key` = 'CLIENT_SECRET'";
+            //$qry = "SELECT `value` FROM `GS2DB_env` WHERE `key` = 'CLIENT_SECRET'";
             //$value = sqlc::qry_exec($qry)['value'];
             $value = "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";
             return $value;
@@ -326,7 +326,7 @@
 
         private static function get_redirect_uri(){
             //sqlc::connect();
-            //$qry = "SELECT `value` FROM `S2DB_env` WHERE `key` = 'REDIRECT_URI'";
+            //$qry = "SELECT `value` FROM `GS2DB_env` WHERE `key` = 'REDIRECT_URI'";
             //$value = sqlc::qry_exec($qry)['value'];
             $value = "https://4500-junnkun-spreadsheettodb-jl91e12r6i3.ws-eu38.gitpod.io/pages/index.php";
             return $value;

@@ -55,14 +55,29 @@
 
     <body>
         <h1 style="text-align: center;">Spreadsheet to SQL</h1>
-        <form class="sf">
-            <input style="width:100%;text-align:center;font-size:20px;" id="spreadsheet_url" type="text"  placeholder="SPREADSHEET URL">
-            <input style="width:AUTO;text-align:center;font-size:20px;" id="BTN" type='button' value='=>'>
-        </form>
 
-        <table id="TBL0" style="display:none"></table>
-        <input id="BTN1" type="button" value='SEND' style="display:none"></table>
-        <p id="pino"></p>
+        <div class="sf" id="LOW_BOX">
+            <input class="searchBox" id="spreadsheet_url" type="text" placeholder="Google spreadsheet URL">
+            <button class="btnSearchBox" id="BTN">Submit</button>
+        </div>
+
+        <div id="loading" class="lds-ring" style="display:none">
+            <div></div><div></div><div></div><div></div>
+        </div>
+
+        <div class="midBox" id="MID_BOX" style="display:none">
+            <p>Tabelle trovate...</p>
+            <table id="TBL0"></table>
+            <input id="BTN1" type="button" value='SEND'>
+        </div>
+
+        
+        
+        <!--<input id="BTN2" type="button" value='DOWNLOAD SQL' style="display:none">-->
+        <button id="BTN2" onclick="f()" style="display:none">DOWNLOAD SQL</button> 
+
+
+
         <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
         <script src="../resources/api.js"></script>
     </body>
@@ -70,8 +85,8 @@
     <script>
         
         $(document).ready(() => {
-            $('#spreadsheet_url').val(localStorage.getItem("url_403"));   
-            localStorage.removeItem("url_403");    
+            //$('#spreadsheet_url').val(localStorage.getItem("url_403"));   
+            //localStorage.removeItem("url_403");    
         });
 
         // variabile globale per tenere in memoria URL, nomi tabelle...
@@ -79,7 +94,6 @@
 
         // Dopo aver inserito URL foglio google premi invia e viene eseguita questa:
         $('#BTN').on('click', () => {
-            
             let value = $('#spreadsheet_url').val();
 
             if (value === '') 
@@ -88,14 +102,16 @@
                 return;
             }
 
+            $('#MID_BOX').css("display", "none");
+            $('#loading').css("display", "block");
+
             $.ajax({
                 type: 'GET',
                 url: '../resources/server.php',
-                crossDomain: true,
-                data: { spreadsheet_url: $('#spreadsheet_url').val() },
+                data: {spreadsheet_url: value},
                 success: (response) => {
-                    
                     // mostra grafica => [CHECKBOX] [NOME_TABELLA] [INTERVALLO]
+                    $('#loading').css("display", "none");
                     page.showTablesCheckBox($('#TBL0'), response.spreadsheet_names);
                     
                     // Variabile globale buffer: salvo url foglio google
@@ -103,16 +119,17 @@
                     // Salvo nomi tabelle ritornati dalla richiesta
                     buffer["spreadsheet_names"] = response.spreadsheet_names;
                     // Il button #BTN1 adesso è visibile
-                    $('#BTN1').css('display', 'block');
+                    $("#MID_BOX").css('display', 'block');
                 },
                 error: (xhr) => {
-                    if (xhr.responseJSON.status_message === "PERMISSION_DENIED" && xhr.responseJSON.status_code === 403){
+                    if (xhr.responseJSON.status_message === "PERMISSION_DENIED" && xhr.responseJSON.status_code === 403)
+                    {
                         localStorage.setItem("url_403", $('#spreadsheet_url').val());
                         document.body.innerHTML = "<h2>Per effettuare questa richiesta e' necessario accedere con un account Google</h2>";
                         document.body.innerHTML += "<span><a href='<?php echo GoogleClient::get_object()->createAuthUrl(); ?>'>clicca qui</a> per accedere</span>";
                     }
                     else
-                    document.body.innerHTML = JSON.stringify(xhr.responseJSON);
+                        document.body.innerHTML = JSON.stringify(xhr.responseJSON);
                 }
             });
 
@@ -129,20 +146,25 @@
                 data: getParameters(), // ottiene nomi tabelle ed eventuali intervalli selezionati
                 success: (response) => {
                     // per ogni tabella vengono mostrati i dati, ritornati dalla richiesta
-                    const tables = response.tables;
+                    const tables_b64 = response.tables_b64;
+                    const tables = JSON.parse(atob(tables_b64));
                     $('#TBL0').css('display', 'none');
                     $('#BTN1').css('display', 'none');
+                    buffer['checksheet_names'] = []; 
+                    buffer['TABLES_B64'] = response.tables_b64;
                     buffer.spreadsheet_names.forEach(tableName => {
                         if (tables[tableName] !== undefined){
-                            
                             // tables[tableName][index_riga][index_colonna]
                             // tables[tableName][0][...] => NOMI COLONNE
                             // tables[tableName][1->n][...] => Righe effettive tabella
+                            buffer['checksheet_names'].push(tableName);
                             console.log(tables[tableName]);
                             page.showTable(tables[tableName], document);
                             //console.log(tables[tableName]);
                         }
                     });
+                    $('#BTN2').css('display', 'block');
+
                 },
                 error: (xhr) => {
                     document.body.innerHTML = JSON.stringify(xhr.responseJSON);
@@ -150,6 +172,20 @@
                 }
             });
         });
+
+        const f = () => {
+            $.ajax({
+                type: 'GET',
+                url: '../resources/server.php',
+                data: {"SHEET_NAMES": buffer['checksheet_names'], "TABLES_B64": buffer['TABLES_B64']},
+                success: (response) => {
+                    document.body.innerHTML += response;
+                },
+                error: (xhr) => {
+
+                }
+            });
+        };
 
         const getParameters = () => {
             // [TABLE1] [INTERVAL1]
@@ -174,7 +210,13 @@
             });
 
             return parameters;
-        }
+        };
+
+        const getTablesB64 = () => {
+
+
+
+        };
 
     </script>
 
@@ -182,14 +224,73 @@
 
 <style>
 
+    @import url('https://fonts.googleapis.com/css2?family=Quicksand:wght@300;400&display=swap');
 
+    body {
+        font-family: 'Quicksand', sans-serif;
+        justify-content: center;
+        position: relative;
+        min-height: 100vh;
+    }   
 
+    .searchBox {
+        font-family: 'Quicksand', sans-serif;
+        width: 80%;
+        text-align: center;
+        font-size: 20px;
+        margin-left: auto;
+        margin-right: auto;
+        display: flex;
+        margin: 10px;
+        height: 50px;
+        border-radius: 25px;
+        outline: none;
+        border: none;
+    }
+
+    .btnSearchBox {
+        font-family: 'Quicksand', sans-serif;
+        width: auto;
+        text-align: center;
+        font-size: 20px;
+        margin-left: auto;
+        margin-right: auto;
+        width: 250px;
+        height: 50px;
+        margin: 0 auto;
+        padding: 0;
+        line-height: 50px;
+        text-align: center;
+        margin: 10px;
+        border-radius: 25px;
+        outline: none;
+        border: none;
+    }
+
+    .midBox {
+
+        border: 2px solid black;
+        width: 80%;
+        height: 60%;
+        margin-left: auto;
+        margin-right: auto;
+        margin-top: 100px;
+        margin-bottom: 100px;
+    }   
+
+    ::selection {
+        background-color: rgb(60,60,60);
+        color: white;
+    }
 
     .sf {
-        border: 0px solid black; 
+        border: 2px solid black; 
         width: 80%;
         margin-left: auto;
         margin-right: auto;
+        display: flex;
+        justify-content: center;
+        align-items: center;
     }
 
     p, h2 {
@@ -224,7 +325,7 @@
   margin-bottom: 15px;
 }
 table{
-  width:100%;
+  width:90%;
   table-layout: fixed;
 }
 .tbl-header{
@@ -257,11 +358,9 @@ td{
 
 /* demo styles */
 
-@import url(https://fonts.googleapis.com/css?family=Roboto:400,500,300,700);
 body{
   background: -webkit-linear-gradient(left, #25c481, #25b7c4);
   background: linear-gradient(to right, #25c481, #25b7c4);
-  font-family: 'Roboto', sans-serif;
 }
 section{
   margin: 50px;
@@ -305,5 +404,86 @@ section{
 ::-webkit-scrollbar-thumb {
     -webkit-box-shadow: inset 0 0 6px rgba(0,0,0,0.3); 
 }
+
+body {
+
+    background: #2f2f2f;
+}
+
+
+
+.lds-ring {
+  display: inline-block;
+  position: relative;
+  width: 80px;
+  height: 80px;
+  margin-left: auto;
+  margin-right: auto;
+  margin-top: 30px;
+  margin-bottom: 30px;
+}
+.lds-ring div {
+  box-sizing: border-box;
+  display: block;
+  position: absolute;
+  width: 64px;
+  height: 64px;
+  margin: 8px;
+  border: 8px solid #fff;
+  border-radius: 50%;
+  animation: lds-ring 1.2s cubic-bezier(0.5, 0, 0.5, 1) infinite;
+  border-color: #fff transparent transparent transparent;
+}
+.lds-ring div:nth-child(1) {
+  animation-delay: -0.45s;
+}
+.lds-ring div:nth-child(2) {
+  animation-delay: -0.3s;
+}
+.lds-ring div:nth-child(3) {
+  animation-delay: -0.15s;
+}
+@keyframes lds-ring {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+#footer1 {
+
+text-transform: uppercase;
+border-top: 1px solid rgb(207, 0, 0);
+box-sizing: border-box;
+font-weight: 100;
+letter-spacing: 3px;
+bottom: 0px;
+width: 100%;
+background-color: #000000;
+height: 200px;
+text-align: center;
+font-weight: 400;
+position: absolute;
+box-shadow: 1px 20px 54px 14px #ff0000;
+
+}
+
+#footerText {
+
+color: rgb(212, 212, 212);
+font-size: 20px;
+text-align: center;
+position: relative;
+top: 50%;
+transform: translateY(-50%);
+transition: .4s;
+font-weight: 100;
+letter-spacing: 3px;
+}
+
+
+
 
 </style>
