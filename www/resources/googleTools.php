@@ -244,24 +244,27 @@
             }
 
             $index = array();
-            for ($i=0; $i<count($m[0]); $i++){
-
-                if ($m[0][$i]['value'] === "NULL")
-                    unset($m[0][$i]);
-                else { $index[] = $i; }
+            foreach($m[0] as $key => $value){
+                if ($m[0][$key]['value'] === "NULL")
+                    unset($m[0][$key]);
+                else
+                    $index[] = $key;
             }
+
+//            echo '<pre>'; print_r($m); echo '</pre>';
+  //          exit;
+
             $m[0] = array_values($m[0]);
 
-            $min = $index[0];
-            $max = $index[count($index)-1];
-            unset($index);
-
             for ($i=1; $i<count($m); $i++){
+
                 $n = count($m[$i]);
-                for ($j=0; $j<$n; $j++){
-                    if ($m[$i][$j]['value'] === "NULL" && $j < 4 || j > 6)
-                        unset($m[$i][$j]);
+                
+                foreach ($m[$i] as $key => $value){
+                    if (!in_array($key, $index))
+                        unset($m[$i][$key]);
                 }
+
                 $m[$i] = array_values($m[$i]);
             }
 
