@@ -83,6 +83,9 @@
                         response::client_error(400, "Il foglio {$table_name} non e' impostato correttamente");
                     }
 
+                    for ($i=0; $i<count($tables[$table_name][0]); $i++)
+                        $tables[$table_name][0][$i]['type'] = "VARCHAR(255)";
+
                     // Get sql code for the table
                     //$sql_ctx .= sqlc::parseSQL($table_name, $table) . "\n\n";
                 }

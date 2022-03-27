@@ -100,7 +100,6 @@
 
             */
 
-
             $sql = "";
             $sql .= "-- CREATION TABLE\n";
             $sql .= sqlc::get_script($table_name, $table, "CREATION"); // ritorna query per la CREAZIONE della tabella
