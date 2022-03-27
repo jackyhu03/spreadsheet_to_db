@@ -58,7 +58,7 @@
 
         <div class="sf" id="LOW_BOX">
             <input class="searchBox" id="spreadsheet_url" type="text" placeholder="Google spreadsheet URL">
-            <button class="btnSearchBox" id="BTN">Submit</button>
+            <button class="btnSearchBox" id="BTN">SEARCH</button>
         </div>
 
         <div id="loading" class="lds-ring" style="display:none">
@@ -66,17 +66,13 @@
         </div>
 
         <div class="midBox" id="MID_BOX" style="display:none">
-            <p>Tabelle trovate...</p>
-            <table id="TBL0"></table>
-            <input id="BTN1" type="button" value='SEND'>
+            <p style="color: white;font-size:3rem">Tabelle trovate</p>
+            <table id="TBL0" class="midTable"></table>
+            <p class="showAnt" id="BTN1">Mostra anteprima</p>
         </div>
 
-        
-        
-        <!--<input id="BTN2" type="button" value='DOWNLOAD SQL' style="display:none">-->
-        <button id="BTN2" onclick="f()" style="display:none">DOWNLOAD SQL</button> 
-
-
+        <div class="finalBox" id="FINAL_BOX" style="display:none">
+        </div>
 
         <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
         <script src="../resources/api.js"></script>
@@ -84,6 +80,8 @@
 
     <script>
         
+        const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+
         $(document).ready(() => {
             //$('#spreadsheet_url').val(localStorage.getItem("url_403"));   
             //localStorage.removeItem("url_403");    
@@ -98,12 +96,14 @@
 
             if (value === '') 
             { 
-                alert("Required field");
+                $('#spreadsheet_url').css("background-color", "rgb(255, 137, 137)");
+                delay(500).then(()=>$('#spreadsheet_url').css("background-color", "white"));
                 return;
             }
 
             $('#MID_BOX').css("display", "none");
             $('#loading').css("display", "block");
+            $('#FINAL_BOX').css("display", "none");
 
             $.ajax({
                 type: 'GET',
@@ -140,16 +140,18 @@
         // per adesso visualizza dati tabelle solo in console
         $('#BTN1').on('click', () => {
 
+            $('#MID_BOX').css("display", "none");
+            $('#loading').css("display", "block");
+
             $.ajax({
                 type: 'GET',
                 url: '../resources/server.php',
                 data: getParameters(), // ottiene nomi tabelle ed eventuali intervalli selezionati
                 success: (response) => {
+                    $('#loading').css("display", "none");
                     // per ogni tabella vengono mostrati i dati, ritornati dalla richiesta
                     const tables_b64 = response.tables_b64;
                     const tables = JSON.parse(atob(tables_b64));
-                    $('#TBL0').css('display', 'none');
-                    $('#BTN1').css('display', 'none');
                     buffer['checksheet_names'] = []; 
                     buffer['TABLES_B64'] = response.tables_b64;
                     buffer.spreadsheet_names.forEach(tableName => {
@@ -158,13 +160,11 @@
                             // tables[tableName][0][...] => NOMI COLONNE
                             // tables[tableName][1->n][...] => Righe effettive tabella
                             buffer['checksheet_names'].push(tableName);
-                            console.log(tables[tableName]);
-                            page.showTable(tables[tableName], document);
+                            page.showTable(tables[tableName]);
                             //console.log(tables[tableName]);
                         }
                     });
-                    $('#BTN2').css('display', 'block');
-
+                    $('#FINAL_BOX').css('display', 'block');
                 },
                 error: (xhr) => {
                     document.body.innerHTML = JSON.stringify(xhr.responseJSON);
@@ -231,21 +231,49 @@
         justify-content: center;
         position: relative;
         min-height: 100vh;
-    }   
+    }
+    
+    .finalBox {
+
+        width: 90%;
+        margin-left: auto;
+        margin-right: auto;
+        margin-bottom: 100px;
+    }
 
     .searchBox {
         font-family: 'Quicksand', sans-serif;
-        width: 80%;
+        width: 100%;
         text-align: center;
         font-size: 20px;
-        margin-left: auto;
-        margin-right: auto;
-        display: flex;
         margin: 10px;
         height: 50px;
         border-radius: 25px;
         outline: none;
         border: none;
+        transition: .5s;
+    }
+
+    .showAnt {
+        color: white;
+        transition: .7s;
+        font-size: 2.8rem;
+        text-align: center;
+        border-radius: 25px;
+        color: rgb(0, 255, 119);
+        font-weight: 100;
+    }
+
+    .showAnt:hover {
+        transform: scale(1.2);
+        cursor: pointer;
+    }
+
+    .midTable {
+        padding: 80px;
+        margin-left: auto;
+        margin-right: auto;
+        width: 80%;
     }
 
     .btnSearchBox {
@@ -255,27 +283,70 @@
         font-size: 20px;
         margin-left: auto;
         margin-right: auto;
-        width: 250px;
+        width: 400px;
         height: 50px;
-        margin: 0 auto;
-        padding: 0;
-        line-height: 50px;
         text-align: center;
         margin: 10px;
         border-radius: 25px;
         outline: none;
         border: none;
+        position: absolute;
+        left: 50%;
+        -ms-transform: translate(-50%, 0);
+        transform: translate(-50%, 0);
+    }
+
+    .checkBoxClass {
+
+        width: 30px !important;
+        height: 30px !important;
+        margin: 5px;
+        outline: none;
+        filter: hue-rotate(30deg);
+        box-shadow: none;
+        font-size: 2em;
+    }
+
+    .checkBoxClass:hover {
+        cursor: pointer;
+    }
+
+    .intervalClass {
+
+        font-family: 'Quicksand', sans-serif;
+        background-color: #2f2f2f;
+        outline: none;
+        border: none;
+        color: white;
+    }
+
+    .btnSend {
+
+        font-family: 'Quicksand', sans-serif;
+        width: auto;
+        text-align: center;
+        font-size: 20px;
+        width: 50%;
+        height: 50px;
+        text-align: center;
+        margin: 10px;
+        font-size: 3rem;
+        border-radius: 25px;
+        outline: none;
+        border: none;
+        color: black;
     }
 
     .midBox {
 
-        border: 2px solid black;
+        border: 1px solid black;
+        border-radius: 25px;
         width: 80%;
         height: 60%;
         margin-left: auto;
         margin-right: auto;
-        margin-top: 100px;
-        margin-bottom: 100px;
+        margin-bottom: 200px;    
+        padding: 80px;   
     }   
 
     ::selection {
@@ -284,13 +355,11 @@
     }
 
     .sf {
-        border: 2px solid black; 
         width: 80%;
         margin-left: auto;
         margin-right: auto;
-        display: flex;
-        justify-content: center;
-        align-items: center;
+        margin-bottom: 150px;
+        margin-top: 50px;
     }
 
     p, h2 {
@@ -301,14 +370,13 @@
     table {
         margin-left: auto;
         margin-right: auto;
-        border: 2px solid black;
-        width: 20%;
+        width: 100%;
     }
 
     td, tr, button {
         margin-left: auto;
         margin-right: auto;
-        width: 200px;
+        width: 50%;
     }
 
     button:hover {
@@ -317,173 +385,140 @@
 
 
     h1{
-  font-size: 30px;
-  color: #fff;
-  text-transform: uppercase;
-  font-weight: 300;
-  text-align: center;
-  margin-bottom: 15px;
-}
-table{
-  width:90%;
-  table-layout: fixed;
-}
-.tbl-header{
-  background-color: rgba(255,255,255,0.3);
- }
-.tbl-content{
-  height:300px;
-  overflow-x:auto;
-  margin-top: 0px;
-  border: 1px solid rgba(255,255,255,0.3);
-}
-th{
-  padding: 20px 15px;
-  text-align: left;
-  font-weight: 500;
-  font-size: 12px;
-  color: #fff;
-  text-transform: uppercase;
-}
-td{
-  padding: 15px;
-  text-align: left;
-  vertical-align:middle;
-  font-weight: 300;
-  font-size: 12px;
-  color: #fff;
-  border-bottom: solid 1px rgba(255,255,255,0.1);
-}
+        font-size: 30px;
+        color: #fff;
+        text-transform: uppercase;
+        font-weight: 300;
+        text-align: center;
+        margin-bottom: 15px;
+    }
 
+    table{
+        width:100%;
+        table-layout: fixed;
+    }
 
-/* demo styles */
+    .tbl-header{
+        margin-top: 50px;
+        background-color: rgba(255,255,255,0.3);
+        width:100%;
+    }
 
-body{
-  background: -webkit-linear-gradient(left, #25c481, #25b7c4);
-  background: linear-gradient(to right, #25c481, #25b7c4);
-}
-section{
-  margin: 50px;
-}
+    .tbl-content{
+        margin-bottom: 50px;
+        height:300px;
+        overflow-x:auto;
+        margin-top: 0px;
+        border: 1px solid rgba(255,255,255,0.3);
+        width:100%;
+    }
 
+    th {
+        padding: 20px 15px;
+        text-align: left;
+        font-weight: 500;
+        font-size: 12px;
+        color: #fff;
+        text-transform: uppercase;
+    }
 
-/* follow me template */
-.made-with-love {
-  margin-top: 40px;
-  padding: 10px;
-  clear: left;
-  text-align: center;
-  font-size: 10px;
-  font-family: arial;
-  color: #fff;
-}
-.made-with-love i {
-  font-style: normal;
-  color: #F50057;
-  font-size: 14px;
-  position: relative;
-  top: 2px;
-}
-.made-with-love a {
-  color: #fff;
-  text-decoration: none;
-}
-.made-with-love a:hover {
-  text-decoration: underline;
-}
+    td {
+        padding: 15px;
+        text-align: left;
+        vertical-align:middle;
+        font-weight: 300;
+        font-size: 12px;
+        color: #fff;
+        border-bottom: solid 1px rgba(255,255,255,0.1);
+    }
 
+    body {
+        background: -webkit-linear-gradient(left, #25c481, #25b7c4);
+        background: linear-gradient(to right, #25c481, #25b7c4);
+    }
+    section {
+        margin: 50px;
+    }
 
-/* for custom scrollbar for webkit browser*/
+    .made-with-love {
+        margin-top: 40px;
+        padding: 10px;
+        clear: left;
+        text-align: center;
+        font-size: 10px;
+        font-family: arial;
+        color: #fff;
+    }
 
-::-webkit-scrollbar {
-    width: 6px;
-} 
-::-webkit-scrollbar-track {
-    -webkit-box-shadow: inset 0 0 6px rgba(0,0,0,0.3); 
-} 
-::-webkit-scrollbar-thumb {
-    -webkit-box-shadow: inset 0 0 6px rgba(0,0,0,0.3); 
-}
+    .made-with-love i {
+        font-style: normal;
+        color: #F50057;
+        font-size: 14px;
+        position: relative;
+        top: 2px;
+    }
+    .made-with-love a {
+        color: #fff;
+        text-decoration: none;
+    }
+    .made-with-love a:hover {
+        text-decoration: underline;
+    }
 
-body {
+    ::-webkit-scrollbar {
+        idth: 6px;
+    } 
+    ::-webkit-scrollbar-track {
+        -webkit-box-shadow: inset 0 0 6px rgba(0,0,0,0.3); 
+    } 
+    ::-webkit-scrollbar-thumb {
+        -webkit-box-shadow: inset 0 0 6px rgba(0,0,0,0.3); 
+    }
 
-    background: #2f2f2f;
-}
+    body {
+        background: #2f2f2f;
+    }
 
+    .lds-ring {
+        display: inline-block;
+        position: relative;
+        width: 80px;
+        height: 80px;
+        margin-left: auto;
+        margin-right: auto;
+        margin-top: 30px;
+        margin-bottom: 30px;
+    }
+    .lds-ring div {
+        box-sizing: border-box;
+        display: block;
+        position: absolute;
+        width: 64px;
+        height: 64px;
+        margin: 8px;
+        border: 8px solid #fff;
+        border-radius: 50%;
+        animation: lds-ring 1.2s cubic-bezier(0.5, 0, 0.5, 1) infinite;
+        border-color: #fff transparent transparent transparent;
+    }
+    .lds-ring div:nth-child(1) {
+        animation-delay: -0.45s;
+    }
+    .lds-ring div:nth-child(2) {
+        animation-delay: -0.3s;
+    }
+    .lds-ring div:nth-child(3) {
+        animation-delay: -0.15s;
+    }
 
-
-.lds-ring {
-  display: inline-block;
-  position: relative;
-  width: 80px;
-  height: 80px;
-  margin-left: auto;
-  margin-right: auto;
-  margin-top: 30px;
-  margin-bottom: 30px;
-}
-.lds-ring div {
-  box-sizing: border-box;
-  display: block;
-  position: absolute;
-  width: 64px;
-  height: 64px;
-  margin: 8px;
-  border: 8px solid #fff;
-  border-radius: 50%;
-  animation: lds-ring 1.2s cubic-bezier(0.5, 0, 0.5, 1) infinite;
-  border-color: #fff transparent transparent transparent;
-}
-.lds-ring div:nth-child(1) {
-  animation-delay: -0.45s;
-}
-.lds-ring div:nth-child(2) {
-  animation-delay: -0.3s;
-}
-.lds-ring div:nth-child(3) {
-  animation-delay: -0.15s;
-}
-@keyframes lds-ring {
-  0% {
-    transform: rotate(0deg);
-  }
-  100% {
-    transform: rotate(360deg);
-  }
-}
-
-#footer1 {
-
-text-transform: uppercase;
-border-top: 1px solid rgb(207, 0, 0);
-box-sizing: border-box;
-font-weight: 100;
-letter-spacing: 3px;
-bottom: 0px;
-width: 100%;
-background-color: #000000;
-height: 200px;
-text-align: center;
-font-weight: 400;
-position: absolute;
-box-shadow: 1px 20px 54px 14px #ff0000;
-
-}
-
-#footerText {
-
-color: rgb(212, 212, 212);
-font-size: 20px;
-text-align: center;
-position: relative;
-top: 50%;
-transform: translateY(-50%);
-transition: .4s;
-font-weight: 100;
-letter-spacing: 3px;
-}
-
-
+    @keyframes lds-ring {
+        0% {
+            transform: rotate(0deg);
+        }
+        100% {
+            transform: rotate(360deg);
+        }
+    }
 
 
 </style>
