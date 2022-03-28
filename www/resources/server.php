@@ -20,7 +20,6 @@
 
     require_once 'googleTools.php';
     require_once 'class.response.php';
-    require_once 'sqlTools.php';
     
     switch ($_SERVER['REQUEST_METHOD']){
 
@@ -46,6 +45,7 @@
             else if (isset($_REQUEST['spreadsheet_url']) && count($_GET) > 1){
                 // Verifica parametri passati 
                 $link = $_REQUEST['spreadsheet_url'];
+                
                 $intervals = array();
                 $table_names = array();
                 for ($i=1; $i<count($_REQUEST); $i++){
@@ -74,7 +74,7 @@
                 $tables = array();
 
                 $table_ctx = "";
-
+                
                 foreach (array_combine($table_names, $intervals) as $table_name => $interval){
 
                     // Get table (array[][])
@@ -83,11 +83,10 @@
                         response::client_error(400, "Il foglio {$table_name} non e' impostato correttamente");
                     }
 
-                    for ($i=0; $i<count($tables[$table_name][0]); $i++)
-                        $tables[$table_name][0][$i]['type'] = "VARCHAR(255)";
+                    $types = SQLTypes::__GET__($tables[$table_name]);
 
-                    // Get sql code for the table
-                    //$sql_ctx .= sqlc::parseSQL($table_name, $table) . "\n\n";
+                    for ($i=0; $i<count($tables[$table_name][0]); $i++)
+                        $tables[$table_name][0][$i]['type'] = $types[$i];
                 }
 
                 $table_ctx .= json_encode($tables);
@@ -101,21 +100,16 @@
 
 
             // ---> Request for download SQL file
-            else if (isset($_REQUEST['TABLES_B64']) && isset($_REQUEST['SHEET_NAMES'])){
-
-                $table_ctx = base64_decode($_REQUEST['TABLES_B64']);
-
-                $tables = json_decode($table_ctx, true);
-                $names = $_REQUEST['SHEET_NAMES'];
-
-                $sql_ctx = "";
+            else if (isset($_REQUEST['TABLES_B64']) && isset($_REQUEST['SHEET_NAMES']) && isset($_REQUEST['DB_NAME']) && isset($_REQUEST['FILENAME'])){
                 
-                foreach ($names as $name){
-                    $sql_ctx .= sqlc::parseSQL($name, $tables[$name]) . "\n\n";
-                }
+                $tables = json_decode(base64_decode($_REQUEST['TABLES_B64']), true);
+                $names = json_decode($_REQUEST['SHEET_NAMES'], true);
+                $db_name = $_REQUEST['DB_NAME'];
+                $filename = $_REQUEST['FILENAME'] . ".sql";
 
-                $filename = "database.sql";
-                file_put_contents($filename, "ciao 123");
+                $sql_ctx = sqlc::get_sql_ctx($tables, $names, $db_name);
+
+                file_put_contents($filename, $sql_ctx);
                 response::download_file($filename, true);
             }
 
@@ -125,9 +119,9 @@
             break;
         }
 
-        case 'GET': {
-
-            break;
+        case 'POST': {
+	
+            break;	
         }
 
         default: {

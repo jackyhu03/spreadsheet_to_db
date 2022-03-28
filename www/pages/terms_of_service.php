@@ -4,9 +4,9 @@
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Privacy</title>
+    <title>Terms of service</title>
 </head>
 <body>
-    <h1>GS2DB - Privacy</h1>
+    <h1>GS2DB - Terms of service</h1>
 </body>
 </html>

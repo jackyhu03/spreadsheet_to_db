@@ -12,6 +12,7 @@
     //   -> Ritorna tabella richiesta in tipo array (multidimensionale)
 
     require_once 'requestTools.php';
+    require_once 'sqlTools.php';
     //require_once 'OAuth/google/vendor/autoload.php';
 
     //https://sheets.googleapis.com/v4/spreadsheets/13p3_l3bnNjV0K9MuTl2_M37n-0bYySLan2fdpDNeoiY?ranges=TABELLA1!A1:C16&fields=sheets(data(rowData(values(userEnteredFormat%2FnumberFormat%2CuserEnteredValue))%2CstartColumn%2CstartRow))&key=AIzaSyAxrhJVQNqFD43MjLPLlj55OlLXs7yUqJw
@@ -27,6 +28,7 @@
         private const API_LINK = "https://sheets.googleapis.com/v4/spreadsheets/";
 
         public static function get_url_4vals($api_link, $spreadsheet_id, $ranges, $key){
+            $key = self::get_api_key();
             return "{$api_link}{$spreadsheet_id}?ranges={$ranges}&fields=sheets(data(rowData(values(userEnteredFormat%2FnumberFormat%2CuserEnteredValue))%2CstartColumn%2CstartRow))&key={$key}";
         }
 
@@ -62,13 +64,13 @@
             return gettype($array) === 'array' ? $array : false;
         }
 
-        public static function spreadsheet_permission($spreadsheet_id){
+        public static function spreadsheet_permission($spreadsheet_id, $access_token = false){
             $url = self::API_LINK.$spreadsheet_id."?key=".self::KEYS[0];
-            $req = new ARequest($url, self::get_atkn());
+            $req = new ARequest($url, $access_token ? $access_token: self::get_atkn());
             $req->send();
             $array = json_decode($req->get_response(), true);
 
-            setcookie("gs_id_403", $spreadsheet_id, time()+1000, "/", "gitpod.io");
+            setcookie("gs_id_403", $spreadsheet_id, time()+1000, "/");
 
             if ($array['error']['code'] === 403 && $array['error']['status'] === "PERMISSION_DENIED"){
                 return false;                
@@ -285,6 +287,13 @@
 
             return $m;
         }
+        
+        private static function get_api_key(){
+            sqlc::connect();
+            $qry = "SELECT `value` FROM `GS2DB_env` WHERE `key` = 'API_KEY'";
+            $value = sqlc::qry_exec($qry)[0][0];
+            return $value;
+        }
     }
 
 
@@ -309,26 +318,23 @@
         }
 
         private static function get_client_id(){
-            //sqlc::connect();
-            //$qry = "SELECT `value` FROM `GS2DB_env` WHERE `key` = 'CLIENT_ID'";
-            //$value = sqlc::qry_exec($qry)['value'];
-            $value = "840496728901-a9saji4i1tg8jhaia3sbb8saea8arii3.apps.googleusercontent.com";
+            sqlc::connect();
+            $qry = "SELECT `value` FROM `GS2DB_env` WHERE `key` = 'CLIENT_ID'";
+            $value = sqlc::qry_exec($qry)[0][0];
             return $value;
         }
 
         private static function get_client_secret(){
-            //sqlc::connect();
-            //$qry = "SELECT `value` FROM `GS2DB_env` WHERE `key` = 'CLIENT_SECRET'";
-            //$value = sqlc::qry_exec($qry)['value'];
-            $value = "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";
+            sqlc::connect();
+            $qry = "SELECT `value` FROM `GS2DB_env` WHERE `key` = 'CLIENT_SECRET'";
+            $value = sqlc::qry_exec($qry)[0][0];
             return $value;
         }
 
         private static function get_redirect_uri(){
-            //sqlc::connect();
-            //$qry = "SELECT `value` FROM `GS2DB_env` WHERE `key` = 'REDIRECT_URI'";
-            //$value = sqlc::qry_exec($qry)['value'];
-            $value = "https://4500-junnkun-spreadsheettodb-jl91e12r6i3.ws-eu38.gitpod.io/pages/index.php";
+            sqlc::connect();
+            $qry = "SELECT `value` FROM `GS2DB_env` WHERE `key` = 'REDIRECT_URI'";
+            $value = sqlc::qry_exec($qry)[0][0];
             return $value;
         }
     }
