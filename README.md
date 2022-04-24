@@ -1,4 +1,4 @@
-# SPREADSHEET 2 MARIADB
+# Google Spresheet To Database
 ## Project Description:
 
 School project.
