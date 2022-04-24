@@ -5,7 +5,7 @@ School project.
 
 ## Service URL:
 
-- https://mywebs.altervista.org/spreadsheet_to_db/home
+- https://mywebs.altervista.org/GS2DB/
 
 ## Collaborators:
 
