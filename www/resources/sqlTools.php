@@ -1,7 +1,7 @@
 <?php
 
     class sqlc {
-        
+
         private static $conn = null;
 
         public static function connect($address = "localhost", $name = "mywebs", $password = "", $dbname = "my_mywebs"){
@@ -21,7 +21,7 @@
             $sql_ctx .= "SET SQL_MODE = 'NO_AUTO_VALUE_ON_ZERO';\n";
             $sql_ctx .= "START TRANSACTION;\n";
             $sql_ctx .= "SET time_zone = '+00:00';\n\n";
-            
+
             $sql_ctx .= "CREATE DATABASE IF NOT EXISTS `{$db_name}`;";
 
             foreach ($table_names as $table_name){
@@ -32,7 +32,7 @@
         }
 
         private static function get_script(string $tablename, array $table, string $method, string $db_name){
-            // method CREATION   -> ritorna script sql creazione tabella passata 
+            // method CREATION   -> ritorna script sql creazione tabella passata
             // method INSERTION  -> ritorna script sql inserimento dati nella tabella
             $tablename = str_replace(" ", "_", $tablename);
             $sql = "";
@@ -47,16 +47,16 @@
                         if ($i === count($table[0])-1)
                             $cnames .= "`" . str_replace(" ", "_", $table[0][$i]['value']) . "`)\n";
                         else
-                            $cnames .= "`" . str_replace(" ", "_", $table[0][$i]['value']) . "`,";    
+                            $cnames .= "`" . str_replace(" ", "_", $table[0][$i]['value']) . "`,";
                     }
                     $vnames = "";
                     for ($i=1; $i<count($table); $i++){
                         $vnames .= "(";
                         for ($j=0; $j<count($table[0]); $j++){
-                            
+
                             $s = "'";
                             if (SQLTypes::__CATEGORY__($table[0][$j]['type']) === "I") $s = "";
-                            
+
                             if ($table[$i][$j]['value'] === "NULL")
                                 $s = "";
 
@@ -68,9 +68,9 @@
                             }else
                                 $vnames .= $s . str_replace(" ", "_", $table[$i][$j]['value']) . $s . ",";
                             end:
-                        }    
+                        }
                     }
-            
+
                     $sql = "INSERT INTO `{$db_name}`.`{$tablename}` \n{$cnames}VALUES \n{$vnames};";
                     break;
                 }
@@ -114,7 +114,7 @@
                         => 'DATE' (yy|yy/-m|m/-d|d)
 
 
-                    url per fare test postman:    
+                    url per fare test postman:
                         https://sheets.googleapis.com/v4/spreadsheets/13p3_l3bnNjV0K9MuTl2_M37n-0bYySLan2fdpDNeoiY?ranges=TABELLA1!A1:C16&fields=sheets(data(rowData(values(userEnteredFormat%2FnumberFormat%2CuserEnteredValue))%2CstartColumn%2CstartRow))&key=AIzaSyAxrhJVQNqFD43MjLPLlj55OlLXs7yUqJw
                     possibilità di vedere oggetto originale ritornato dalla richiesta
 
@@ -137,7 +137,7 @@
 
 		private const DATE_P = ['Y/m/d', 'Y-m-d'];
 		private const DATETIME_P = ['Y/m/d H:i:s', 'Y-m-d H:i:s'];
-        
+
         public static function __CATEGORY__($SQL_TYPE){
             switch ($SQL_TYPE){
                 case'INT':case'FLOAT':case'DOUBLE':case'TINYINT':case'SMALLINT':case'MEDIUMINT':
@@ -145,6 +145,10 @@
                     {return "I";break;};
                 default:{return "S";break;};
             }
+        }
+
+        private static function is_primary_col($array){
+            return count(array_filter(array_values(array_count_values($array)),function($n){return$n>1;}))===0?1:0;
         }
 
 		private static function DATETIME($str){
@@ -164,7 +168,7 @@
 		}
 
 		private static function YEAR($str){
-			return strlen($str) === 4 && strtotime($str); 
+			return strlen($str) === 4 && strtotime($str);
 		}
 
 		private static function JSON($str){
@@ -183,7 +187,7 @@
             return false;
         }
 
-        private static function FLOAT($str){
+        private static function DECIMAL($str){
             $regex = preg_match('/^-?(?:\d+|\d*\.\d+)$/', $str);
             if( $regex ){
                 return true;
@@ -191,7 +195,7 @@
             return false;
         }
 
-        private static function DECIMAL($str){
+        private static function FLOAT($str){
             $regex = preg_match('/^[0-9]+(\.[0-9]{1,2})?$/', $str);
             if ($regex){
                 return true;
@@ -200,7 +204,7 @@
         }
 
 		private static function CHAR($str){
-			return strlen($str) < 256 && strlen($str) > -1;
+			return strlen($str) === 1;
 		}
 
 		private static function BOOLEAN($str){
@@ -211,9 +215,9 @@
 
 			if ($type1 === "NULL") return $type2;
 			if ($type2 === "NULL") return $type1;
-	
+
 			if ($type1.$type2 === "FLOATDECIMAL" || $type1.$type2 === "DECIMALFLOAT")
-				return "FLOAT";
+				return "DECIMAL";
 			if ($type1.$type2 === "DATEYEAR" || $type1.$type2 === "YEARDATE")
 				return "DATE";
 			if (self::get_higher_type($type1) === self::get_higher_type($type2)){
@@ -229,7 +233,7 @@
 		private static function get_higher_type($type, $bind = false){
 
 			switch($type){
-	
+
 				case 'INT': case 'FLOAT': case 'DECIMAL': case 'BOOLEAN': {
 					return "I";break;
 				}
@@ -244,7 +248,7 @@
 
 		private static function get_type($v){
 
-			if (self::DATE($v)) 
+			if (self::DATE($v))
 				return "DATE";
 			else if (self::DATETIME($v))
 				return "DATETIME";
@@ -269,7 +273,7 @@
 		private static function get_gs_type($gs){
 
 			$type = "";
-	
+
 			if ($gs['type'] === 'DATE')
 				$type = "DATE";
 			else if ($gs['type'] === "numberValue")
@@ -278,25 +282,42 @@
 				$type = "BOOLEAN";
 			else if ($gs['type'] === "NULL")
 				$type = "NULL";
-	
+
 			return $type;
 		}
 
 		private static function get_vertical_line($m, $index){
 
 			$array = array();
-	
+
 			for ($j=1; $j<count($m); $j++)
-				if ($m[$j][$index]['type'] === "NULL") continue; 
+				if ($m[$j][$index]['type'] === "NULL") continue;
 				else $array[] = strval($m[$j][$index]['value']);
-            
+
 			return $array;
 		}
+
+        private static function get_vline_array($m, $col){
+
+            $array = array();
+            for ($i=1; $i<count($m); $i++){
+                $array[] = $m[$i][$col]['value'];
+            }
+
+            return $array;
+        }
 
 		public static function __GET__(&$m){
 
 			$types = array();
-	
+
+            if (count($m) === 1) // solo creazione tabelle
+            {
+				for ($i=0; $i<count($m[0]); $i++)
+                	$types[] = "";
+            	return;
+            }
+
 			for ($i=0; $i<count($m[0]); $i++){
 				$type = "";
 				for ($j=1; $j<count($m); $j++){
@@ -316,7 +337,7 @@
 						}
 						if ($type !== $t){
 							$type = self::resolve_types($t, $type);
-							if (!$type) {$types[] = "VARCHAR"; goto end;} 
+							if (!$type) {$types[] = "VARCHAR"; goto end;}
 						}else{
 							$type = $t;
 						}
@@ -325,11 +346,11 @@
 				$types[] = $type;
 				end:
 			}
-	
+
 			if (in_array("VARCHAR", $types)){
 				for ($i=0; $i<count($types); $i++){
 					if ($types[$i] === "VARCHAR"){
-						$lengths = array_map('strlen', self::get_vertical_line($m, $i)); 
+						$lengths = array_map('strlen', self::get_vertical_line($m, $i));
 						$types[$i] = "VARCHAR(" . max($lengths) . ")";
 					}
 				}
@@ -350,9 +371,39 @@
 					}
 				}
 			}
-	
+
+            for ($i=0; $i<count($m[0]); $i++){
+
+                $nulls = array();
+
+                for ($j=0; $j<count($m); $j++)
+                {
+                    if ($m[$j][$i]['type'] === "NULL")
+                        $nulls[] = "true";
+                    else
+                        $nulls[] = "false";
+                }
+
+                if (!in_array("true", $nulls))
+                    $types[$i] = $types[$i] . "+NOT+NULL";
+            }
+
+            for ($i=0; $i<count($m[0]); $i++){
+                $array = self::get_vline_array($m, $i);
+                if (self::is_primary_col($array)){
+                    $types[$i] .= "+PRIMARY+KEY";
+                    break;
+                }
+            }
+
 			return $types;
 		}
+
+        private static function foreign_col($array){
+
+            // FOREIGN+KEY+REFERENCES+'TABLE'('COLUMN') : 0
+            return $mixed;
+        }
 	}
 
 ?>

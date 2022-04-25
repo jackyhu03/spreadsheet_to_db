@@ -1,9 +1,9 @@
 <?php
-    
+
     // METODI PUBBLICI
     // response::client_error(codice errore, messaggio risposta facoltativo, json aggiuntivo nella risposta facoltativo => esempio: array("key" => "value", "key2" => "value2"))
     // response::server_error(codice errore, messaggio risposta facoltativo, json aggiuntivo nella risposta facoltativo)
-    // response::successful(codice success, messaggio risposta facoltativo, json aggiuntivo nella risposta facoltativo) 
+    // response::successful(codice success, messaggio risposta facoltativo, json aggiuntivo nella risposta facoltativo)
 
     class response {
 
@@ -18,7 +18,7 @@
         private const HTTP_RESPONSE_STATUS_CODES = array(
 
             self::ID_SUCCESSFUL => array(
-                
+
                 200 => "OK",
                 201 => "Created",
                 204 => "No Content"
@@ -53,6 +53,13 @@
             self::send($json, true);
         }
 
+        public static function client_error_view($status_code, $status_msg){
+            if (!self::status_code_valid($status_code, self::ID_CLIENT_ERROR)) response::server_error(500);
+            http_response_code($status_code);
+            print(json_encode($status_msg));
+            exit;
+        }
+
         public static function server_error(int $status_code, $status_msg = false, array $array = array()){
 
             if (!self::status_code_valid($status_code, self::ID_SERVER_ERROR)) response::server_error(500);
@@ -61,7 +68,7 @@
             $status_msg = self::get_status_msg(self::ID_SERVER_ERROR, $status_code, $status_msg);
 
             $json = json_encode(array_merge(array('success' => false,'status_code' => $status_code,'status_message' => $status_msg), $array), JSON_PRETTY_PRINT);
-            
+
             self::send($json, true);
         }
 
@@ -80,7 +87,7 @@
         private static function ctype($option){
 
             switch (strtoupper($option)){
-                case 'TEXT': {   
+                case 'TEXT': {
                     header(self::CT_TEXT);
                     break;
                 }
@@ -102,9 +109,9 @@
 
         private static function get_status_msg(int $index, int $status_code, $status_msg){
 
-            return ( 
-                $status_msg !== false ? 
-                    $status_msg : (@self::HTTP_RESPONSE_STATUS_CODES[$index][$status_code] === null ? 
+            return (
+                $status_msg !== false ?
+                    $status_msg : (@self::HTTP_RESPONSE_STATUS_CODES[$index][$status_code] === null ?
                         "Status Message Not Available" : self::HTTP_RESPONSE_STATUS_CODES[$index][$status_code])
             );
         }
@@ -119,6 +126,9 @@
 
         // Il percorso del file passato (che si trova nei file del server) verrà scaricato sul lato client
         public static function download_file($filename, bool $exit = true){
+            $dir = hash("sha256", $filename);
+            chdir("temp_sql_files");
+            chdir($dir);
             header("Cache-Control: public");
             header("Content-Description: file transfer");
             header("Content-Disposition: attachment; filename={$filename}");
@@ -127,8 +137,7 @@
             http_response_code(200);
             readfile($filename);
             unlink($filename);
-            if ($exit === true) exit;
         }
     }
-    
+
 ?>

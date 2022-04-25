@@ -1,35 +1,18 @@
-<?php 
-
-    // Le richieste da parte del client possono essere effettate a questa pagina php
-    
-    // Esempio richiesta:
-    
-    // Nome servizio:           spreadtodb.php
-    // ------------------------------------------
-    // Elenco Paramentri
-    // ------------------------------------------
-    // Link foglio google:      spreadsheeturl=[link foglio google]
-    // Riferimento tabella1:    TABLE1=[nometabella1] & INTERVAL1=[A1:C9]
-    // Riferimento tabella2:    TABLE2=[nometabella2]
-    // Riferimento tabellaN:    TABLEN=[nometabellaN] & INTERVALN=[A1:C4]
-
-    // Di default passando solo il nome del foglio (foglio1, foglio2, ...) il programma restituisce le tabella in un array
-    // Se nel foglio oltre alla tabella dovessero esserci altre celle compilate che non fanno parte della tabella,
-    // sono necessari i parametri INTERVAL in modo da precisare il range di caselle da prendere in considerazione
-    // Se nel caso descritto non si inserisce il parametro INTERVAL viene generato un errore 400
+<?php
 
     require_once 'googleTools.php';
     require_once 'class.response.php';
-    
+    require_once 'tokens.php';
+
     switch ($_SERVER['REQUEST_METHOD']){
 
         case 'GET': {
-            
+
             // ---> Return found table names
             if (isset($_REQUEST['spreadsheet_url']) && count($_GET) === 1){
                 $spreadsheet_id = GoogleAPI::get_spreadsheet_id($_REQUEST['spreadsheet_url']);
                 if ($spreadsheet_id === false) response::client_error(400, "Incorrect URL");
-                
+
                 else if (GoogleAPI::spreadsheet_permission($spreadsheet_id) === false){
                     response::client_error(403, "PERMISSION_DENIED");
                 }
@@ -43,9 +26,9 @@
 
             // ---> Return tables data
             else if (isset($_REQUEST['spreadsheet_url']) && count($_GET) > 1){
-                // Verifica parametri passati 
+                // Verifica parametri passati
                 $link = $_REQUEST['spreadsheet_url'];
-                
+
                 $intervals = array();
                 $table_names = array();
                 for ($i=1; $i<count($_REQUEST); $i++){
@@ -62,23 +45,25 @@
                 // errore del client (400) 'parametri errati'
                 if (count($table_names) === 0) {
                     response::client_error(400, "Bad parameters");
-                } 
+                }
 
                 // errore del client (400) 'parametri passati non correttamente o errati'
                 if (!isset($table_names[0])) {
                     response::client_error(400, "Wrong or incorrect parameters");
                 }
-                
+
                 $spreadsheet_id = GoogleAPI::get_spreadsheet_id($link);
                 $sql_ctx = "";
                 $tables = array();
 
                 $table_ctx = "";
-                
+
                 foreach (array_combine($table_names, $intervals) as $table_name => $interval){
 
                     // Get table (array[][])
+
                     $tables[$table_name] = $table = GoogleAPI::get_spreadsheet($spreadsheet_id, $table_name, $interval);
+
                     if ($table === false){
                         response::client_error(400, "Il foglio {$table_name} non e' impostato correttamente");
                     }
@@ -98,30 +83,38 @@
                 exit;
             }
 
-
-            // ---> Request for download SQL file
-            else if (isset($_REQUEST['TABLES_B64']) && isset($_REQUEST['SHEET_NAMES']) && isset($_REQUEST['DB_NAME']) && isset($_REQUEST['FILENAME'])){
-                
-                $tables = json_decode(base64_decode($_REQUEST['TABLES_B64']), true);
-                $names = json_decode($_REQUEST['SHEET_NAMES'], true);
-                $db_name = $_REQUEST['DB_NAME'];
-                $filename = $_REQUEST['FILENAME'] . ".sql";
-
-                $sql_ctx = sqlc::get_sql_ctx($tables, $names, $db_name);
-
-                file_put_contents($filename, $sql_ctx);
-                response::download_file($filename, true);
+            else if (isset($_REQUEST['filename']) && count($_GET) === 1){
+                response::download_file($_REQUEST['filename'], false);
+                chdir("../");
+                rmdir(hash("sha256", $_REQUEST['filename']));
+                exit;
             }
-
-
-            
 
             break;
         }
 
         case 'POST': {
-	
-            break;	
+
+            // ---> Request for download SQL file
+            if (isset($_REQUEST['SHEET_NAMES']) && isset($_REQUEST['DB_NAME']) && isset($_REQUEST['FILENAME']) && isset($_REQUEST['TABLES_B64'])){
+
+                $tables = json_decode(base64_decode($_REQUEST['TABLES_B64']), true);
+                $names = json_decode($_REQUEST['SHEET_NAMES'], true);
+                $db_name = $_REQUEST['DB_NAME'];
+                $filename = $_REQUEST['FILENAME'] . ".sql";
+
+
+                $sql_ctx = sqlc::get_sql_ctx($tables, $names, $db_name);
+
+                $rep = hash("sha256", $filename);
+                chdir("temp_sql_files");
+                mkdir($rep);
+                chdir($rep);
+                file_put_contents($filename, $sql_ctx);
+                response::successful(200, false, array("filename" => $filename));
+            }
+
+            break;
         }
 
         default: {

@@ -1,10 +1,81 @@
 @import url('https://fonts.googleapis.com/css2?family=Quicksand:wght@300;400&display=swap');
 
+:root {
+    --dc: aqua;
+}
+
 body {
     font-family: 'Quicksand', sans-serif;
     justify-content: center;
     position: relative;
-    min-height: 100vh;
+}
+
+#ul-nb {
+    list-style: none;
+    margin:2px;
+    padding:3px;
+    font-size: 1.4rem;
+    text-transform: uppercase;
+    text-decoration-line: none;
+}
+
+#ul-nb li {
+    float:left;
+    padding:10px;
+    background:none;
+    text-align: center;
+    margin-left:5px;
+}
+
+#ul-nb li:hover {
+    color:transparent;
+    opacity:0.8;
+}
+
+::-webkit-scrollbar {
+    width: 10px;
+}
+
+::-webkit-scrollbar-track {
+    background: #2F2F2F;
+}
+
+::-webkit-scrollbar-thumb {
+    border: 2px solid var(--dc);
+    border-radius: 5px;
+}
+
+::-webkit-scrollbar:horizontal{
+    height: 10px;
+}
+::-webkit-scrollbar-thumb:horizontal{
+    background: #2F2F2F;
+    border-radius: 10px;
+}
+
+.capTbName {
+    font-size: 2rem;
+    border-top-right-radius: 25px;
+    border-top-left-radius: 25px;
+    color: var(--dc);
+    display: table-caption;
+    text-align: center;
+    padding: 20px;
+    border-bottom: 2px solid var(--dc);
+}
+
+.capForeign {
+    font-size: 1.4rem;
+    display: table-caption;
+    text-align: center;
+    padding: 30px;
+    caption-side:bottom;
+    color: white;
+    text-decoration: underline;
+}
+
+.capForeign:hover {
+    cursor: pointer;
 }
 
 .finalBox {
@@ -37,7 +108,7 @@ body {
     font-size: 2.8rem;
     text-align: center;
     border-radius: 25px;
-    color: rgb(0, 255, 119);
+    color: var(--dc);
     font-weight: 100;
 }
 
@@ -73,12 +144,15 @@ body {
     left: 50%;
     -ms-transform: translate(-50%, 0);
     transform: translate(-50%, 0);
+    border: 2px solid aqua;
+    color: aqua;
+    background: none;
 }
 
 .downloadBtn {
 
-    color: rgb(0,255,119);
-    border: 0px solid rgb(0,255,119);
+    color: var(--dc);
+    border: 0px solid var(--dc);
     background-color: transparent;
     font-family: 'Quicksand', sans-serif;
     position: absolute;
@@ -141,10 +215,11 @@ body {
     height: 60%;
     margin-left: auto;
     margin-right: auto;
-    margin-bottom: 200px;    
-    padding: 80px;   
+    margin-bottom: 200px;
+    padding: 80px;
     box-shadow: rgba(0, 0, 0, 0.35) 0px 5px 15px;
-}   
+    border: 2px solid var(--dc);
+}
 
 ::selection {
     background-color: rgb(60,60,60);
@@ -161,6 +236,10 @@ body {
 
 p, h2 {
     font-size: 25px;
+    text-align: center;
+}
+
+a {
     text-align: center;
 }
 
@@ -197,17 +276,19 @@ table{
 }
 
 .tbl-header{
+    border-top-left-radius: 25px;
+    border-top-right-radius: 25px;
     margin-top: 50px;
     background-color: rgba(255,255,255,0.3);
     width:90%;
     margin-left: auto;
     margin-right: auto;
-    border-radius: 25px;
-    margin-bottom: 10px;
+    border-left: 2px solid var(--dc);
+    border-right: 2px solid var(--dc);
+    border-top: 2px solid var(--dc);
 }
 
 .tbl-content{
-    margin-top: 10px;
     margin-bottom: 50px;
     height:300px;
     overflow-x:auto;
@@ -216,7 +297,9 @@ table{
     width:90%;
     margin-left: auto;
     margin-right: auto;
-    border-radius: 25px;
+    border-left: 2px solid var(--dc);
+    border-right: 2px solid var(--dc);
+    border-bottom: 2px solid var(--dc);
 }
 
 th {
@@ -231,15 +314,16 @@ th {
 
 .type {
     font-family: 'Quicksand', sans-serif;
-    color: rgb(0,255,119);
+    color: var(--dc);
     font-size: 1.1rem;
     background-color: transparent;
     outline: none;
-    border: 1px solid rgb(0,255,119);
+    border: 1px solid var(--dc);
     border-radius: 10px;
     text-align: center;
     padding: 10px;
     width: 80%;
+    text-transform: uppercase;
 }
 
 td {
@@ -252,10 +336,7 @@ td {
     border-bottom: solid 1px rgba(255,255,255,0.1);
 }
 
-body {
-    background: -webkit-linear-gradient(left, #25c481, #25b7c4);
-    background: linear-gradient(to right, #25c481, #25b7c4);
-}
+
 section {
     margin: 50px;
 }
@@ -287,16 +368,16 @@ section {
 
 ::-webkit-scrollbar {
     idth: 6px;
-} 
+}
 ::-webkit-scrollbar-track {
-    -webkit-box-shadow: inset 0 0 6px rgba(0,0,0,0.3); 
-} 
+    -webkit-box-shadow: inset 0 0 6px rgba(0,0,0,0.3);
+}
 ::-webkit-scrollbar-thumb {
-    -webkit-box-shadow: inset 0 0 6px rgba(0,0,0,0.3); 
+    -webkit-box-shadow: inset 0 0 6px rgba(0,0,0,0.3);
 }
 
 body {
-    background: #2f2f2f;
+    background: #2F2F2F;
 }
 
 .lds-ring {
@@ -338,4 +419,12 @@ body {
     100% {
         transform: rotate(360deg);
     }
+}
+
+.TN {
+    color: var(--dc);
+    font-size: 3rem;
+    letter-spacing: 4px;
+    font-weight: 100;
+    text-transform: uppercase;
 }

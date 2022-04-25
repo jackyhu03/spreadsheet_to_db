@@ -2,34 +2,33 @@
 
     // METODI PUBBLICI (require 'DataStructures/class.googleAPI.php')
 
-    // googleAPI::get_spreadsheet_settings(id foglio google) 
+    // googleAPI::get_spreadsheet_settings(id foglio google)
     //   -> Ritorna array associativo contenente dati generali foglio google
-   
-    // googleAPI::get_spreadsheet_id(url foglio google) 
+
+    // googleAPI::get_spreadsheet_id(url foglio google)
     //   -> Ritorna ID foglio passando come parametro url foglio google
-   
+
     // googleAPI::get_spreadsheet(id foglio google, nome foglio (foglio1, 2, 3...), intervallo opzionale)
     //   -> Ritorna tabella richiesta in tipo array (multidimensionale)
 
     require_once 'requestTools.php';
     require_once 'sqlTools.php';
+    require_once 'normalizer.php';
     //require_once 'OAuth/google/vendor/autoload.php';
-
     //https://sheets.googleapis.com/v4/spreadsheets/13p3_l3bnNjV0K9MuTl2_M37n-0bYySLan2fdpDNeoiY?ranges=TABELLA1!A1:C16&fields=sheets(data(rowData(values(userEnteredFormat%2FnumberFormat%2CuserEnteredValue))%2CstartColumn%2CstartRow))&key=AIzaSyAxrhJVQNqFD43MjLPLlj55OlLXs7yUqJw
 
     class GoogleAPI {
 
-        // Google API available keys
-        private const KEYS = array
-        (
-            0 => "AIzaSyBr_2TRtx0qm-Ey_wjxSgT0y8owE33HJP0", 
-        );
-
         private const API_LINK = "https://sheets.googleapis.com/v4/spreadsheets/";
+        private const API_LINK_1 = "https://content-sheets.googleapis.com/v4/spreadsheets/";
 
-        public static function get_url_4vals($api_link, $spreadsheet_id, $ranges, $key){
+        public static function get_url_4vals($api_link, $spreadsheet_id, $ranges){
             $key = self::get_api_key();
             return "{$api_link}{$spreadsheet_id}?ranges={$ranges}&fields=sheets(data(rowData(values(userEnteredFormat%2FnumberFormat%2CuserEnteredValue))%2CstartColumn%2CstartRow))&key={$key}";
+        }
+
+        public static function get_api_link_cell($spreadsheet_id, $range){
+            return self::API_LINK_1 . "{$spreadsheet_id}/values/{$range}";
         }
 
         private static function parseDate($serial_date, $pattern = "d/m/Y"){
@@ -38,15 +37,15 @@
         }
 
         public static function test_request($spreadsheet_id){
-            $url = get_url_4vals(self::API_LINK, $spreadsheet_id, "");
-
+            $url = get_url_4vals(self::API_LINK, $spreadsheet_id);
         }
 
         // Get table values (array)   $sheet_name = nome foglio, interval = [AN:BM]
         // -> vai a format data per vedere come accedere ai valori restituiti
         public static function get_spreadsheet(string $spreadsheet_id, string $sheet_name, string $interval = ''){
             if ($interval !== '') $interval = "!".$interval;
-            $url = self::get_url_4vals(self::API_LINK, $spreadsheet_id, $sheet_name.$interval, self::KEYS[0]);
+            $sheet_name = "'" . $sheet_name . "'";
+            $url = self::get_url_4vals(self::API_LINK, $spreadsheet_id, $sheet_name.$interval);
             $req = new ARequest($url, self::get_atkn());
             $response = $req->send();
             $data = self::format_data_adv($response);
@@ -57,7 +56,7 @@
 
         // Global settings
         public static function get_spreadsheet_settings(string $spreadsheet_id){
-            $url = self::API_LINK.$spreadsheet_id."?key=".self::KEYS[0];
+            $url = self::API_LINK . $spreadsheet_id . "?key=" . self::get_api_key();
             $req = new ARequest($url, self::get_atkn());
             $req->send();
             $array = json_decode($req->get_response(), true);
@@ -65,21 +64,31 @@
         }
 
         public static function spreadsheet_permission($spreadsheet_id, $access_token = false){
-            $url = self::API_LINK.$spreadsheet_id."?key=".self::KEYS[0];
+            session_start();
+            if (isset($_SESSION['ATKN']))
+            {
+            	if ($access_token === false)
+                	$access_token = $_SESSION['ATKN'];
+            }
+            $url = self::API_LINK . $spreadsheet_id . "?key=" . self::get_api_key();
             $req = new ARequest($url, $access_token ? $access_token: self::get_atkn());
             $req->send();
             $array = json_decode($req->get_response(), true);
 
-            setcookie("gs_id_403", $spreadsheet_id, time()+1000, "/");
+            if (!isset($_COOKIE['PHPSESSID'])) session_start();
+            $_SESSION["GS_ID"] = $spreadsheet_id;
 
             if ($array['error']['code'] === 403 && $array['error']['status'] === "PERMISSION_DENIED"){
-                return false;                
+                return false;
+            } else if ($array['error']['code'] === 401 || isset($array['error'])){
+                return false;
             }
             else return true;
         }
 
         private static function get_atkn(){
-            return isset($_COOKIE['atkn'])? $_COOKIE['atkn'] : 0; 
+        	session_start();
+            return isset($_SESSION['ATKN'])? $_SESSION['ATKN'] : 0;
         }
 
         // Get googleSheet's ID from googleSheet's link
@@ -103,6 +112,8 @@
         }
 
         private static function check_data_adv(array $m){
+            if (count($m) === 0){
+            return false;}
             $n = count($array[0]);
             for ($i=1; $i<count($m); $i++){
                 if (count($array[$i]) !== $n){
@@ -117,18 +128,18 @@
             $table_names = array();
             for ($i=0; $i<count($spreadsheet_settings['sheets']); $i++)
                 $table_names[] = $spreadsheet_settings['sheets'][$i]['properties']['title'];
-            return $table_names; 
+            return $table_names;
         }
 
         // Rimuove righe e colonne vuote (in caso venga passata una tabella non posizionata in alto a sinistra del foglio google)
-        // Ritorna array facilmente accessibile 
+        // Ritorna array facilmente accessibile
         private static function format_data(string $json){
             $array = json_decode($json, true);
             $t_array = array();
 
             foreach ($array as $key => $value){
                 if($key !== 'values')
-                    $t_array[$key] = $value; 
+                    $t_array[$key] = $value;
             }
 
             if (!isset($array['values'])){
@@ -151,11 +162,11 @@
             }
             unset($size);
 
-            // Reset index 
+            // Reset index
             $array = array_values($array);
-            
+
             $size0 = -1; // n columns
-            // Delete empty columns 
+            // Delete empty columns
             for ($i=0; $i<count($array); $i++){
                 if ($i === 0) {
                     $size0 = count($array[0]);
@@ -184,10 +195,10 @@
                 }
             }
 
-            // Reset index 
+            // Reset index
             for ($i=0; $i<count($array); $i++)
                 $array[$i] = array_values($array[$i]);
-            
+
             return $array;
             /*
                 array[0][0->n] record 0: column names
@@ -199,6 +210,7 @@
 
         private static function format_data_adv($json){
 
+            $json = normalize_string($json);
             $array = (json_decode($json, true));
 
             $array = $array['sheets'][0]['data'][0]['rowData'];
@@ -227,7 +239,7 @@
                     if (isset($array[$i]['values'][$j]['userEnteredFormat']['numberFormat']['type'])){
                         if ($array[$i]['values'][$j]['userEnteredFormat']['numberFormat']['type'] === 'DATE'){
                             $type = $array[$i]['values'][$j]['userEnteredFormat']['numberFormat']['type'];
-                            $matrix[$i][$j] = array($type => self::parseDate($array[$i]['values'][$j]['userEnteredValue']['numberValue'])); 
+                            $matrix[$i][$j] = array($type => self::parseDate($array[$i]['values'][$j]['userEnteredValue']['numberValue']));
                         }
                     }
                 }
@@ -253,15 +265,12 @@
                     $index[] = $key;
             }
 
-//            echo '<pre>'; print_r($m); echo '</pre>';
-  //          exit;
-
             $m[0] = array_values($m[0]);
 
             for ($i=1; $i<count($m); $i++){
 
                 $n = count($m[$i]);
-                
+
                 foreach ($m[$i] as $key => $value){
                     if (!in_array($key, $index))
                         unset($m[$i][$key]);
@@ -277,17 +286,23 @@
                     if ($m[$i][$j]['value'] === 'NULL' && $m[$i][$j]['type'] === 'NULL'){
                         $t++;
                     }
+                    if ($m[$i][$j]['type'] === "formulaValue"){
+
+                    }
                 }
                 if ($t === $len){
-                    unset($m[$i]);
+                    $m[$i] = NULL;
                 }
             }
 
+            $m = array_filter($m);
             $m = array_values($m);
+
+            //echo '<pre>'; print_r($m); echo '</pre>';
 
             return $m;
         }
-        
+
         private static function get_api_key(){
             sqlc::connect();
             $qry = "SELECT `value` FROM `GS2DB_env` WHERE `key` = 'API_KEY'";

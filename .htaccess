@@ -1,0 +1,26 @@
+RewriteEngine on
+RewriteBase /GS2DB
+
+RewriteRule ^$ www/pages/index.php [L,NC]
+
+RewriteRule ^s$ www/pages/index.php [L,NC]
+RewriteRule ^d$ www/pages/doc.php [L,NC]
+
+RewriteRule ^service$ www/pages/index.php [L,NC]
+RewriteRule ^documentation$ www/pages/doc.php [L,NC]
+
+RewriteRule ^privacy$ www/pages/privacy.php [L,NC]
+RewriteRule ^terms_of_service$ www/pages/terms_of_service.php [L,NC]
+RewriteRule ^OAuth$ www/pages/index.php [L,NC]
+
+# => RewriteRule ^([a-zA-Z0-9]+)$ [PATH]/[FILENAME].php?ARG=$1 [QSA]
+
+<Files .htaccess>
+    Order Allow,Deny
+    Deny from all
+</Files>
+
+<Files docker-compose.yaml>
+    Order Allow,Deny
+    Deny from all
+</Files>
