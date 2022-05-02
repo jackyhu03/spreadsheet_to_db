@@ -189,7 +189,7 @@
 
         private static function DECIMAL($str){
             $regex = preg_match('/^-?(?:\d+|\d*\.\d+)$/', $str);
-            if( $regex ){
+            if ($regex){
                 return true;
             }
             return false;
@@ -208,7 +208,7 @@
 		}
 
 		private static function BOOLEAN($str){
-			return in_array(strtoupper($str), array('0','1','TRUE','FALSE'));
+			return in_array(strtoupper($str), array('TRUE','FALSE'));
 		}
 
 		private static function resolve_types($type1, $type2){
@@ -216,8 +216,11 @@
 			if ($type1 === "NULL") return $type2;
 			if ($type2 === "NULL") return $type1;
 
-			if ($type1.$type2 === "FLOATDECIMAL" || $type1.$type2 === "DECIMALFLOAT")
+			if (($type1.$type2 === "FLOATDECIMAL" || $type1.$type2 === "DECIMALFLOAT") || ($type1.$type2 === "DECIMALINT" || $type1.$type2 === "INTDECIMAL"))
 				return "DECIMAL";
+			if ($type1.$type2 === "FLOATINT" || $type1.$type2 === "INTFLOAT")
+            	return "FLOAT";
+            
 			if ($type1.$type2 === "DATEYEAR" || $type1.$type2 === "YEARDATE")
 				return "DATE";
 			if (self::get_higher_type($type1) === self::get_higher_type($type2)){
@@ -233,8 +236,7 @@
 		private static function get_higher_type($type, $bind = false){
 
 			switch($type){
-
-				case 'INT': case 'FLOAT': case 'DECIMAL': case 'BOOLEAN': {
+				case 'INT': case 'BOOLEAN': {
 					return "I";break;
 				}
 				case 'VARCHAR': case 'CHAR': case 'JSON': {
@@ -258,11 +260,10 @@
 				return "BOOLEAN";
 			else if (self::INT($v))
 				return "INT";
-			else if (self::FLOAT($v)){
-				if (self::DECIMAL($v))
-					return "DECIMAL";
-				else return "FLOAT";
-			}
+			else if (self::FLOAT($v))
+            	return "FLOAT";
+            else if (self::DECIMAL($v))
+                return "DECIMAL";
 			else if (self::JSON($v))
 				return "JSON";
 			else if (self::CHAR($v))
@@ -356,22 +357,22 @@
 				}
 			}
 
-            if (in_array("INT", $types)){
-				for ($i=0; $i<count($types); $i++){
-					if ($types[$i] === "INT"){
-
-						$array = array_map('strtolower', self::get_vertical_line($m, $i));
-
-                        for ($j=1; $j<count($array)+1; $j++){
-                            if (strtolower($m[$j][$i]['value']) == "true")
-                                $m[$j][$i]['value'] = "1";
-                            else if (strtolower($m[$j][$i]['value']) == "false")
-                                $m[$j][$i]['value'] = "0";
-                        }
-					}
-				}
-			}
-
+          for ($i=0; $i<count($types); $i++){
+            if ($types[$i] === "INT" || $types[$i] === "FLOAT" || $types[$i] === "DECIMAL"){
+              for ($j=1; $j<count($m); $j++){
+              	if ($m[$j][$i]['type'] === 'boolValue'){
+                	$m[$j][$i]['type'] = "numberValue";
+                    $m[$j][$i]['value'] = 1;
+                }
+                if ($types[$i] === "FLOAT" || $types[$i] === "DECIMAL"){
+                	if (self::INT($m[$j][$i]['value'])){
+                    	$m[$j][$i]['value'] .= ".0";
+                    }
+              }
+            }
+          }
+          }
+	
             for ($i=0; $i<count($m[0]); $i++){
 
                 $nulls = array();
